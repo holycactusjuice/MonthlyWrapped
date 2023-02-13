@@ -1,0 +1,14 @@
+{
+
+song_id : {
+	track_name: "",
+	artist_names: [],
+	album_name: "",
+	album_art: image,
+	listening_data: {
+		played_at: duration,
+	},
+	
+},
+
+}
