@@ -3,7 +3,7 @@ import time
 import json
 import datetime
 
-ACCESS_TOKEN = "BQDB0c7zO53PJsjOwMjen-MPEYX4-TTtjrKt6X7IHA9vDQ7V2RdzXzzlK42zf-GPCisMelovKgdKm7euuW-zBnUwjkmtHld48_kmey-q4TO2ewkn7MVpiJA8M7tXFpoz292T7qLKO6idBeLlCIciqpD9iTzUGKnhQfOBnuDy3JqTELmvEIf4bQ5mMw"
+ACCESS_TOKEN = "BQBOmAjGz9EpBMc6ajawMWhFViqe-wxoEbieM72b6PgCfspRicSBpcdJrZZbhkzK6Zy2jMGAjCiDormAJ3uoG_G6ODK-AaShXpwOB0ODETxarcLR1fsiNHfzvPjbJU6CHOKFVj5aJIohOvDQu3HDq2Y5ysOwSu2G73aiqO6rxG0T-WXVsGjkCea-5w"
 
 CREATE_PLAYLIST_ENDPOINT = "https://api.spotify.com/v1/users/arashinsavage/playlists"
 GET_CURRENT_TRACK_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing"
@@ -113,57 +113,105 @@ def get_recent_tracks(access_token, limit):
     track_names = [item["track"]["name"] for item in resp_json["items"]]
 
     for i, track in enumerate(recent_tracks):
-        print(f"Track: {track['track']['name']}")
+        # print(track)
 
-        track_title = track['track']['name']
-        track_length = int(track['track']['duration_ms'] / 1000)
         track_id = track['track']['id']
-        artists = [artist["name"] for artist in track["track"]["artists"]]
-        album = track["track"]["album"]["name"]
 
+        if track_id not in tracks:
 
-        tracks[track_id] = {
-            "track_title": track_title,
-            "track_length": track_length,
-            "track_id": track_id,
-            "track_artists": artists,
-            "track_album": album,
-        }
+            track_data = get_track_data(track)
 
+            track_name = track['track']['name']
+            track_length = int(track['track']['duration_ms'] / 1000)
+            track_artists = [artist["name"]
+                             for artist in track["track"]["artists"]]
 
-        # played_at is in seconds since epoch
+            album = track["track"]["album"]
+
+            album_name = album["name"]
+            album_artist = album["artists"][0]["name"]
+            album_art_url = album["images"][0]["url"]
+
+            tracks[track_id] = {
+                "track_name": track_name,
+                "track_length": track_length,
+                "track_id": track_id,
+                "track_artists": track_artists,
+                "album": {
+                    "album_name": album_name,
+                    "album_artist": album_artist,
+                    "album_art_url": album_art_url,
+                },
+                "listen_data": {
+                },
+            }
+
+        # get the time this track ended in unix timestamp
         # time_string is the format: 2023-02-12T17:18:28.679Z
-        time_string = track['played_at']
-        played_at = int(datetime.datetime.strptime(
-            time_string, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
-        print(played_at)
+        played_at = played_at_unix(track['played_at'])
 
-        # if not first track in list
-        if i != 0:
+        # print(played_at)
+
+        # if not first track in list and this listen has not been recorded
+        if i != 0 and played_at not in tracks[track_id]["listen_data"]:
+
+            # get the time the last track ended in unix timestamp
             last_track = recent_tracks[i - 1]
-            last_time_string = last_track['played_at']
+            last_played_at = played_at_unix(last_track['played_at'])
 
-            last_played_at = int(datetime.datetime.strptime(
-                last_time_string, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
-
+            # duration is the difference between when the last track ended (when this track started) and when this track ended
             duration = played_at - last_played_at
-            print(duration, track_length)
-            if duration >= track_length:
-                print(f"Duration played: {track_length} seconds\n")
-            else:
-                print("idk\n")
-        # if first track in list
-        else:
-            print("Duration played: Unknown (this was the first played track)\n")
 
-    # print("current time:", int(MS_SINCE_EPOCH / 1000))
+            # duration may be greater than track length if:
+            #   - the user took a break before playing the track
+            #   - the user paused the track
+            #   - this is the first song in the session
+            # so if duration > track_length, make duration = track_length
+            duration = min(duration, track_length)
 
-    # with open('test.txt', 'w') as f:
-    #     f.write(json.dumps(resp_json))
+            # add this listen to the user's data
+            tracks[track_id]["listen_data"][played_at] = duration
 
-
+    print(tracks)
 
     return track_names
+
+
+def played_at_unix(played_at):
+    return int(datetime.datetime.strptime(
+        played_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+
+
+def get_track_data(track):
+    """
+    Gets the track data given a track json
+    """
+    track_id = track['track']['id']
+    track_name = track['track']['name']
+    track_length = int(track['track']['duration_ms'] / 1000)
+    track_artists = [artist["name"]
+                     for artist in track["track"]["artists"]]
+    track_album = track["track"]["album"]
+
+    album_name = track_album["name"]
+    album_artist = track_album["artists"][0]["name"]
+    album_art_url = track_album["images"][0]["url"]
+
+    track_data = {
+        "track_id": track_id,
+        "track_name": track_name,
+        "track_length": track_length,
+        "track_artists": track_artists,
+        "album": {
+            "album_name": album_name,
+            "album_artist": album_artist,
+            "album_art_url": album_art_url,
+        },
+        "listen_data": {
+        },
+    }
+
+    return track_data
 
 
 def get_top_items(access_token):
@@ -199,12 +247,6 @@ def main():
     # print(current_track)
 
     recent_tracks = get_recent_tracks(ACCESS_TOKEN, 10)
-    for track in recent_tracks:
-        print(track)
-    get_recent_tracks(ACCESS_TOKEN, 50)
-
-    # top = get_top_items(ACCESS_TOKEN)
-    # print(top)
 
 
 if __name__ == '__main__':
