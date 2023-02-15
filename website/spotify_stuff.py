@@ -3,7 +3,7 @@ import time
 import json
 import datetime
 
-ACCESS_TOKEN = "BQBOmAjGz9EpBMc6ajawMWhFViqe-wxoEbieM72b6PgCfspRicSBpcdJrZZbhkzK6Zy2jMGAjCiDormAJ3uoG_G6ODK-AaShXpwOB0ODETxarcLR1fsiNHfzvPjbJU6CHOKFVj5aJIohOvDQu3HDq2Y5ysOwSu2G73aiqO6rxG0T-WXVsGjkCea-5w"
+ACCESS_TOKEN = "BQCQYtmYqSZgXo82gO7m9AvaPKshMDpCeF5bO1tt3iYk9oVzMvqNBmIQ7KAfoSqH5xYuKcDISb6WcARI9d62xyh0aGFd8USRGsXyzXaXWQhPP0lt2kmEYOvJNMB_3hghU54eBKO30WmaHXEQO3SAxujPyAToC0hN1M7No9Sfs2hAptTANdPFVJJUVg"
 
 CREATE_PLAYLIST_ENDPOINT = "https://api.spotify.com/v1/users/arashinsavage/playlists"
 GET_CURRENT_TRACK_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing"
@@ -86,7 +86,7 @@ def get_recent_tracks(access_token, limit):
         limit (int): number of recent tracks to get (bewteen 1 and 50)
 
     Returns:
-
+        tracks (dict): dictionary of track_id : track info
     """
     response = requests.get(
         GET_RECENT_TRACKS_ENDPOINT,
@@ -120,40 +120,16 @@ def get_recent_tracks(access_token, limit):
         if track_id not in tracks:
 
             track_data = get_track_data(track)
-
-            track_name = track['track']['name']
-            track_length = int(track['track']['duration_ms'] / 1000)
-            track_artists = [artist["name"]
-                             for artist in track["track"]["artists"]]
-
-            album = track["track"]["album"]
-
-            album_name = album["name"]
-            album_artist = album["artists"][0]["name"]
-            album_art_url = album["images"][0]["url"]
-
-            tracks[track_id] = {
-                "track_name": track_name,
-                "track_length": track_length,
-                "track_id": track_id,
-                "track_artists": track_artists,
-                "album": {
-                    "album_name": album_name,
-                    "album_artist": album_artist,
-                    "album_art_url": album_art_url,
-                },
-                "listen_data": {
-                },
-            }
+            tracks[track_id] = track_data
 
         # get the time this track ended in unix timestamp
         # time_string is the format: 2023-02-12T17:18:28.679Z
         played_at = played_at_unix(track['played_at'])
 
-        # print(played_at)
-
         # if not first track in list and this listen has not been recorded
         if i != 0 and played_at not in tracks[track_id]["listen_data"]:
+
+            track_length = int(tracks[track_id]['track_length'] / 1000)
 
             # get the time the last track ended in unix timestamp
             last_track = recent_tracks[i - 1]
@@ -172,9 +148,7 @@ def get_recent_tracks(access_token, limit):
             # add this listen to the user's data
             tracks[track_id]["listen_data"][played_at] = duration
 
-    print(tracks)
-
-    return track_names
+    return tracks
 
 
 def played_at_unix(played_at):
@@ -186,7 +160,7 @@ def get_track_data(track):
     """
     Gets the track data given a track json
     """
-    track_id = track['track']['id']
+    # track_id = track['track']['id']
     track_name = track['track']['name']
     track_length = int(track['track']['duration_ms'] / 1000)
     track_artists = [artist["name"]
@@ -198,7 +172,7 @@ def get_track_data(track):
     album_art_url = track_album["images"][0]["url"]
 
     track_data = {
-        "track_id": track_id,
+        # "track_id": track_id,
         "track_name": track_name,
         "track_length": track_length,
         "track_artists": track_artists,

@@ -49,7 +49,7 @@ def logout():
 def sign_up():
     if request.method == 'POST':
         email = request.form.get('email')
-        username = request.form.get('firstName')
+        username = request.form.get('username')
         password1 = request.form.get('password1')
         password2 = request.form.get('password2')
 
@@ -69,7 +69,7 @@ def sign_up():
             db.session.add(new_user)
             db.session.commit()
 
-            login_user(user, remember=True)
+            login_user(new_user, remember=True)
 
             flash('Account created!', category='success')
 

@@ -1,0 +1,17 @@
+{
+    "_id" : 0,
+    "account_info" : {
+        "username" : "",
+        "email" : "",
+        "password_hash" : ""
+    },
+    "listen_data" : {
+        "track_id" : {
+            "name" : "",
+            "artists" : "",
+            "length" : 0,
+            "album"
+        }
+    }
+
+}
