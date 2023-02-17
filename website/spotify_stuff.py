@@ -3,7 +3,7 @@ import time
 import json
 import datetime
 
-ACCESS_TOKEN = "BQCQYtmYqSZgXo82gO7m9AvaPKshMDpCeF5bO1tt3iYk9oVzMvqNBmIQ7KAfoSqH5xYuKcDISb6WcARI9d62xyh0aGFd8USRGsXyzXaXWQhPP0lt2kmEYOvJNMB_3hghU54eBKO30WmaHXEQO3SAxujPyAToC0hN1M7No9Sfs2hAptTANdPFVJJUVg"
+ACCESS_TOKEN = "BQBQURNyRIxt9V_xaQngPy865mCnzDiRDGW8VMZbUsfcsm-m8ESI7zdQsmEDzKtNPo8a9yo8VrWwDxacnLsOnFMh9jKVb-28JLaWtPeJZsDBULdjoRCIWjJxyTLgI2pf5vJ8R6svMKkz5792X8V2JceYVl3LbCc_DxLN0iI96wKinx4uSMIQPaAn7A"
 
 CREATE_PLAYLIST_ENDPOINT = "https://api.spotify.com/v1/users/arashinsavage/playlists"
 GET_CURRENT_TRACK_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing"
@@ -127,9 +127,9 @@ def get_recent_tracks(access_token, limit):
         played_at = played_at_unix(track['played_at'])
 
         # if not first track in list and this listen has not been recorded
-        if i != 0 and played_at not in tracks[track_id]["listen_data"]:
+        if i != 0 and played_at not in tracks[track_id]["listen_data"].keys():
 
-            track_length = int(tracks[track_id]['track_length'] / 1000)
+            track_length = int(tracks[track_id]['track_length'])
 
             # get the time the last track ended in unix timestamp
             last_track = recent_tracks[i - 1]
@@ -147,7 +147,7 @@ def get_recent_tracks(access_token, limit):
 
             # add this listen to the user's data
             tracks[track_id]["listen_data"][played_at] = duration
-
+    print(tracks)
     return tracks
 
 
@@ -221,6 +221,7 @@ def main():
     # print(current_track)
 
     recent_tracks = get_recent_tracks(ACCESS_TOKEN, 10)
+    # print(recent_tracks)
 
 
 if __name__ == '__main__':
