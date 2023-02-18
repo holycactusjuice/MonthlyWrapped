@@ -10,7 +10,7 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 
 RESPONSE_TYPE = "code"
-REDIRECT_URI = "http://localhost:3000"
+REDIRECT_URI = "http://localhost:5000/callback"
 REQUIRED_SCOPES = ["playlist-modify-public", "playlist-modify-private",
                    "ugc-image-upload", "user-read-recently-played"]
 SCOPE = "%20".join(REQUIRED_SCOPES)

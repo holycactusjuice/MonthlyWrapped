@@ -62,7 +62,9 @@ def callback():
         token_data = response.json()
         session['access_token'] = token_data['access_token']
         session['refresh_token'] = token_data['refresh_token']
-        return redirect(url_for('home'))
+        # return redirect(url_for('views.home'))
+        return render_template("home.html", user=current_user)
     else:
         # Handle error case
-        return redirect(url_for('login'))
+        # return redirect(url_for('auth.login'))
+        return render_template("home.html", user=current_user)
