@@ -1,8 +1,37 @@
 import requests
+import time
 import json
 import datetime
 import base64
-from spotify_constants import *
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+CLIENT_ID = os.getenv("CLIENT_ID")
+
+RESPONSE_TYPE = "code"
+REDIRECT_URI = "http://localhost:3000"
+REQUIRED_SCOPES = ["playlist-modify-public", "playlist-modify-private",
+                   "ugc-image-upload", "user-read-recently-played"]
+SCOPE = "%20".join(REQUIRED_SCOPES)
+
+CLIENT_CREDS = f"{CLIENT_ID}:{CLIENT_SECRET}"
+CLIENT_CREDS_B64 = base64.b64encode(CLIENT_CREDS.encode()).decode()
+
+
+AUTH_URL = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type={RESPONSE_TYPE}&redirect_uri={REDIRECT_URI}&scope={SCOPE}"
+
+ACCESS_TOKEN = "BQBQURNyRIxt9V_xaQngPy865mCnzDiRDGW8VMZbUsfcsm-m8ESI7zdQsmEDzKtNPo8a9yo8VrWwDxacnLsOnFMh9jKVb-28JLaWtPeJZsDBULdjoRCIWjJxyTLgI2pf5vJ8R6svMKkz5792X8V2JceYVl3LbCc_DxLN0iI96wKinx4uSMIQPaAn7A"
+
+CREATE_PLAYLIST_ENDPOINT = "https://api.spotify.com/v1/users/arashinsavage/playlists"
+GET_CURRENT_TRACK_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing"
+GET_RECENT_TRACKS_ENDPOINT = "https://api.spotify.com/v1/me/player/recently-played"
+GET_TOP_ITEMS_ENDPOINT = "https://api.spotify.com/v1/me/top/tracks"
+
+# current time since epoch in milliseconds
+MS_SINCE_EPOCH = time.time() * 1000 + 5 * 60 * 60 * 1000
 
 
 def get_token():
@@ -30,6 +59,64 @@ def get_token():
 
 def get_auth_header(token):
     return {"Authorization": f"Bearer {token}"}
+
+
+def create_playlist(access_token, name, description, public):
+    """
+    Creates a playlist
+
+    Args:
+        access_token (str): access token from Spotify API to grant persmissions
+        name (str): name of playlist
+        description (str): description of playlist
+        public (bool): True if playlist should be public, False if private
+
+    Returns:
+        json_resp (dict): dictionary representation of the json from the request response
+    """
+
+    # post request
+    response = requests.post(
+        CREATE_PLAYLIST_ENDPOINT,
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        },
+        json={
+            "name": name,
+            "description": description,
+            "public": public
+        }
+    )
+    json_resp = response.json()
+    return json_resp
+
+
+def get_current_track(access_token):
+
+    response = requests.get(
+        GET_CURRENT_TRACK_ENDPOINT,
+        headers={
+            "Authorization": f"Bearer {access_token}"
+        }
+    )
+
+    resp_json = response.json()
+
+    track_id = resp_json["item"]["id"]
+    track_name = resp_json["item"]["name"]
+    artists_names = ", ".join(
+        [artist["name"] for artist in resp_json["item"]["artists"]]
+    )
+    link = resp_json["item"]["external_urls"]["spotify"]
+
+    current_track_info = {
+        "id": track_id,
+        "name": track_name,
+        "artists": artists_names,
+        "link": 'link'
+    }
+
+    return current_track_info
 
 
 def get_recent_tracks(access_token, limit):
@@ -169,19 +256,10 @@ def get_top_items(access_token):
 
 def main():
 
-    # playlist = create_playlist(
-    #     name="My Playlist",
-    #     description="test",
-    #     public=False
-    # )
-
-    # print("Playlist:", playlist)
-
-    # current_track = get_current_track(ACCESS_TOKEN)
-    # print(current_track)
-
-    recent_tracks = get_recent_tracks(ACCESS_TOKEN, 10)
-    # print(recent_tracks)
+    token = get_token()
+    print("token:", token)
+    recent_tracks = get_recent_tracks(token, 3)
+    print(recent_tracks)
 
 
 if __name__ == '__main__':
