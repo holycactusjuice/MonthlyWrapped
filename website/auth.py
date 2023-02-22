@@ -1,9 +1,12 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for
+from flask import Blueprint, render_template, request, flash, redirect, url_for, session
+import requests
+import json
 from .models import User
 from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 import re
+from .spotify_constants import AUTH_URL, REDIRECT_URI, CLIENT_ID, CLIENT_SECRET, TOKEN_URL
 
 auth = Blueprint('auth', __name__)
 
@@ -20,22 +23,8 @@ def is_valid_email(email):
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-
-        user = User.query.filter_by(email=email).first()
-        if user:
-            if check_password_hash(user.password, password):
-                flash('Logged in successfully', category='success')
-                login_user(user, remember=True)
-                return redirect(url_for('views.home'))
-            else:
-                flash('Incorrect password', category='error')
-        else:
-            flash('No account with that email', category='error')
-
-    return render_template("login.html", user=current_user)
+    # return redirect(AUTH_URL)
+    return render_template('login.html', user=current_user)
 
 
 @auth.route('/logout')
@@ -43,6 +32,37 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('auth.login'))
+
+
+@auth.route('/spotify', methods=['GET', 'POST'])
+def spotify():
+    """Exchange authorization code for access token and refresh token"""
+    code = request.args.get('code')
+    if code is None:
+        # Handle error case
+        print('No code provided')
+
+        return redirect(url_for('login'))
+    data = {
+        'grant_type': 'authorization_code',
+        'code': code,
+        'redirect_uri': REDIRECT_URI,
+        'client_id': CLIENT_ID,
+        'client_secret': CLIENT_SECRET
+    }
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.post(TOKEN_URL, data=data, headers=headers)
+    if response.status_code == 200:
+
+        token_data = response.json()
+        session['access_token'] = token_data['access_token']
+        session['refresh_token'] = token_data['refresh_token']
+        return redirect(url_for('views.home'))
+        # return render_template("home.html", user=current_user)
+    else:
+        # Handle error case
+        return redirect(url_for('auth.login'))
+        # return render_template("home.html", user=current_user)
 
 
 @auth.route('/sign-up', methods=['GET', 'POST'])

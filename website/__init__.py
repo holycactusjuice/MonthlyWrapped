@@ -1,17 +1,23 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager
+from pymongo import MongoClient
+from flask_pymongo import PyMongo
 
+PASSWORD = '4qlOBbwf5PvVRr80'
+SECRET_KEY = 'key'
 
-db = SQLAlchemy()
-DB_NAME = "database.db"
+client = MongoClient(
+    f'mongodb+srv://cactus:{PASSWORD}@cluster0.t4brvzm.mongodb.net/test?retryWrites=true&w=majority')
+db = client['test']
+collection = db['test']
 
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = 'key'
-    app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
-    db.init_app(app)
+    app.config['SECRET_KEY'] = SECRET_KEY
+    # app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
+    app.config['MONGO_URI'] = 'mongodb://localhost:27017/test'
+    mongo = PyMongo(app)
 
     from .views import views
     from .auth import auth
@@ -20,9 +26,6 @@ def create_app():
     app.register_blueprint(auth, url_prefix='/')
 
     from .models import User
-
-    with app.app_context():
-        db.create_all()
 
     login_manager = LoginManager()
     login_manager.login_view = ('auth.login')

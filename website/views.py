@@ -34,12 +34,12 @@ def update():
     return jsonify({})
 
 
-@views.route('/login', methods=['GET', 'POST'])
-def login():
-    """
-    Redirect to Spotify authorization page
-    """
-    return redirect(AUTH_URL)
+# @views.route('/login', methods=['GET', 'POST'])
+# def login():
+#     """
+#     Redirect to Spotify authorization page
+#     """
+#     return redirect(AUTH_URL)
 
 
 @views.route('/callback', methods=['GET', 'POST'])
