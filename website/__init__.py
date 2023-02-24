@@ -8,8 +8,8 @@ SECRET_KEY = 'key'
 
 client = MongoClient(
     f'mongodb+srv://cactus:{PASSWORD}@cluster0.t4brvzm.mongodb.net/test?retryWrites=true&w=majority')
-db = client['test']
-collection = db['test']
+db = client['spotify-app']
+users = db['users']
 
 
 def create_app():

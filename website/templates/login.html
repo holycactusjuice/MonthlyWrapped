@@ -1,11 +1,8 @@
 {% extends "base.html" %} {% block title %}Login{% endblock %} {% block content
 %}
 <br />
-<button
-    type="spotify_login"
-    class="btn btn-primary"
-    onclick="window.location.href='{{ spotify_url }}'"
->
-    Login
-</button>
-{% endblock %}
+<form action="/login-spotify">
+    <h3 align="center">Login with Spotify</h3>
+    <button type="submit" class="btn btn-primary" method="POST">Login</button>
+    {% endblock %}
+</form>

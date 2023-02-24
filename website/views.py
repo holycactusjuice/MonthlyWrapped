@@ -40,31 +40,3 @@ def update():
 #     Redirect to Spotify authorization page
 #     """
 #     return redirect(AUTH_URL)
-
-
-@views.route('/callback', methods=['GET', 'POST'])
-def callback():
-    """Exchange authorization code for access token and refresh token"""
-    code = request.args.get('code')
-    if code is None:
-        # Handle error case
-        return redirect(url_for('login'))
-    data = {
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': REDIRECT_URI,
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET
-    }
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    response = requests.post(TOKEN_URL, data=data, headers=headers)
-    if response.status_code == 200:
-        token_data = response.json()
-        session['access_token'] = token_data['access_token']
-        session['refresh_token'] = token_data['refresh_token']
-        # return redirect(url_for('views.home'))
-        return render_template("home.html", user=current_user)
-    else:
-        # Handle error case
-        # return redirect(url_for('auth.login'))
-        return render_template("home.html", user=current_user)

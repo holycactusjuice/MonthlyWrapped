@@ -6,7 +6,8 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from . import db
 from flask_login import login_user, login_required, logout_user, current_user
 import re
-from .spotify_constants import AUTH_URL, REDIRECT_URI, CLIENT_ID, CLIENT_SECRET, TOKEN_URL
+from .spotify_constants import *
+from .spotify_api_test import get_user_id
 
 auth = Blueprint('auth', __name__)
 
@@ -27,6 +28,11 @@ def login():
     return render_template('login.html', user=current_user)
 
 
+@auth.route('/login-spotify', methods=['GET', 'POST'])
+def login_spotify():
+    return redirect(AUTH_URL)
+
+
 @auth.route('/logout')
 @login_required
 def logout():
@@ -34,15 +40,15 @@ def logout():
     return redirect(url_for('auth.login'))
 
 
-@auth.route('/spotify', methods=['GET', 'POST'])
-def spotify():
+@auth.route('/callback', methods=['GET', 'POST'])
+def callback():
     """Exchange authorization code for access token and refresh token"""
     code = request.args.get('code')
     if code is None:
         # Handle error case
-        print('No code provided')
+        flash('No code provided')
 
-        return redirect(url_for('login'))
+        return redirect(url_for('auth.login'))
     data = {
         'grant_type': 'authorization_code',
         'code': code,
@@ -53,46 +59,52 @@ def spotify():
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(TOKEN_URL, data=data, headers=headers)
     if response.status_code == 200:
-
         token_data = response.json()
         session['access_token'] = token_data['access_token']
         session['refresh_token'] = token_data['refresh_token']
-        return redirect(url_for('views.home'))
-        # return render_template("home.html", user=current_user)
+        # return redirect(url_for('views.home'))
+        user = current_user
+        flash(get_user_id())
+
+        login_user(user, remember=True)
+        flash(user.is_authenticated)
+
+        if user.is_authenticated:
+            flash('Successfully logged in')
+        return render_template("home.html", user=user)
     else:
         # Handle error case
         return redirect(url_for('auth.login'))
-        # return render_template("home.html", user=current_user)
 
 
-@auth.route('/sign-up', methods=['GET', 'POST'])
-def sign_up():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        username = request.form.get('username')
-        password1 = request.form.get('password1')
-        password2 = request.form.get('password2')
+# @auth.route('/sign-up', methods=['GET', 'POST'])
+# def sign_up():
+#     if request.method == 'POST':
+#         email = request.form.get('email')
+#         username = request.form.get('username')
+#         password1 = request.form.get('password1')
+#         password2 = request.form.get('password2')
 
-        user = User.query.filter_by(email=email).first()
+#         user = User.query.filter_by(email=email).first()
 
-        if user:
-            flash('An account with that email already exists', category='error')
-        elif not is_valid_email(email):
-            flash('Please enter a valid email address.', category='error')
-        elif password1 != password2:
-            flash('Passwords do not match.', category='error')
-        elif len(password1) < 6:
-            flash('Password must be at least 6 characters.', category='error')
-        else:
-            new_user = User(email=email, username=username, password=generate_password_hash(
-                password1, method='sha256'))
-            db.session.add(new_user)
-            db.session.commit()
+#         if user:
+#             flash('An account with that email already exists', category='error')
+#         elif not is_valid_email(email):
+#             flash('Please enter a valid email address.', category='error')
+#         elif password1 != password2:
+#             flash('Passwords do not match.', category='error')
+#         elif len(password1) < 6:
+#             flash('Password must be at least 6 characters.', category='error')
+#         else:
+#             new_user = User(email=email, username=username, password=generate_password_hash(
+#                 password1, method='sha256'))
+#             db.session.add(new_user)
+#             db.session.commit()
 
-            login_user(new_user, remember=True)
+#             login_user(new_user, remember=True)
 
-            flash('Account created!', category='success')
+#             flash('Account created!', category='success')
 
-            return redirect(url_for('views.home'))
+#             return redirect(url_for('views.home'))
 
-    return render_template('sign_up.html', user=current_user)
+#     return render_template('sign_up.html', user=current_user)

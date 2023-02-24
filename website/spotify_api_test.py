@@ -3,35 +3,7 @@ import time
 import json
 import datetime
 import base64
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-CLIENT_ID = os.getenv("CLIENT_ID")
-
-RESPONSE_TYPE = "code"
-REDIRECT_URI = "http://localhost:3000"
-REQUIRED_SCOPES = ["playlist-modify-public", "playlist-modify-private",
-                   "ugc-image-upload", "user-read-recently-played"]
-SCOPE = "%20".join(REQUIRED_SCOPES)
-
-CLIENT_CREDS = f"{CLIENT_ID}:{CLIENT_SECRET}"
-CLIENT_CREDS_B64 = base64.b64encode(CLIENT_CREDS.encode()).decode()
-
-
-AUTH_URL = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type={RESPONSE_TYPE}&redirect_uri={REDIRECT_URI}&scope={SCOPE}"
-
-ACCESS_TOKEN = "BQBQURNyRIxt9V_xaQngPy865mCnzDiRDGW8VMZbUsfcsm-m8ESI7zdQsmEDzKtNPo8a9yo8VrWwDxacnLsOnFMh9jKVb-28JLaWtPeJZsDBULdjoRCIWjJxyTLgI2pf5vJ8R6svMKkz5792X8V2JceYVl3LbCc_DxLN0iI96wKinx4uSMIQPaAn7A"
-
-CREATE_PLAYLIST_ENDPOINT = "https://api.spotify.com/v1/users/arashinsavage/playlists"
-GET_CURRENT_TRACK_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing"
-GET_RECENT_TRACKS_ENDPOINT = "https://api.spotify.com/v1/me/player/recently-played"
-GET_TOP_ITEMS_ENDPOINT = "https://api.spotify.com/v1/me/top/tracks"
-
-# current time since epoch in milliseconds
-MS_SINCE_EPOCH = time.time() * 1000 + 5 * 60 * 60 * 1000
+from spotify_constants import *
 
 
 def get_token():
@@ -235,31 +207,22 @@ def get_track_data(track):
     return track_data
 
 
-def get_top_items(access_token):
+def get_user_id():
     response = requests.get(
-        GET_TOP_ITEMS_ENDPOINT,
+        GET_USER_ENDPOINT,
         headers={
-            "Authorization": f"Bearer {access_token}",
-        },
-        params={
-            "limit": 50,
-            "time_range": "long_term",
+            "Authorization": f"Bearer {get_token()}"
         }
     )
-    print(response)
-    resp_json = response.json()
 
-    top_artists = [item['name'] for item in resp_json['items']]
-
-    return top_artists
+    user_id = response.json()
+    return user_id
 
 
 def main():
 
-    token = get_token()
-    print("token:", token)
-    recent_tracks = get_recent_tracks(token, 3)
-    print(recent_tracks)
+    user_id = get_user_id()
+    print(user_id)
 
 
 if __name__ == '__main__':

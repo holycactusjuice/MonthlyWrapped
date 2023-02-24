@@ -10,9 +10,8 @@ CLIENT_ID = os.getenv("CLIENT_ID")
 REDIRECT_URI = os.getenv("REDIRECT_URI")
 
 RESPONSE_TYPE = "code"
-REDIRECT_URI = "http://localhost:5000/callback"
 REQUIRED_SCOPES = ["playlist-modify-public", "playlist-modify-private",
-                   "ugc-image-upload", "user-read-recently-played"]
+                   "ugc-image-upload", "user-read-recently-played", "user-read-private", "user-read-email",]
 SCOPE = "%20".join(REQUIRED_SCOPES)
 
 CLIENT_CREDS = f"{CLIENT_ID}:{CLIENT_SECRET}"
@@ -27,7 +26,8 @@ ACCESS_TOKEN = "BQBQURNyRIxt9V_xaQngPy865mCnzDiRDGW8VMZbUsfcsm-m8ESI7zdQsmEDzKtN
 CREATE_PLAYLIST_ENDPOINT = "https://api.spotify.com/v1/users/arashinsavage/playlists"
 GET_CURRENT_TRACK_ENDPOINT = "https://api.spotify.com/v1/me/player/currently-playing"
 GET_RECENT_TRACKS_ENDPOINT = "https://api.spotify.com/v1/me/player/recently-played"
-GET_TOP_ITEMS_ENDPOINT = "https://api.spotify.com/v1/me/top/tracks"
+GET_USER_ENDPOINT = "https://api.spotify.com/v1/me"
+
 
 # current time since epoch in milliseconds
 MS_SINCE_EPOCH = time.time() * 1000 + 5 * 60 * 60 * 1000
