@@ -11,9 +11,6 @@ class User(Document, UserMixin):
     id = IntField(primary_key=True, required=True, unique=True)
 
 
-
-
-
 class Track(Document):
     title = StringField(required=True)
     artists = ListField(StringField(), required=True)

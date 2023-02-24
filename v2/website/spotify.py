@@ -47,13 +47,11 @@ def user_auth(client_id, response_type, redirect_uri, scopes):  # add state para
     return redirect(auth_url)
 
 
-def get_user_id(access_token):
+def get_account_info(access_token):
     response = requests.get(
         endpoints['get_user'],
         headers={
             "Authorization": "Bearer " + access_token,
         }
     )
-
-    user_id = response.json()
-    return user_id
+    return response.json()

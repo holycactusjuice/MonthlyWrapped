@@ -6,7 +6,8 @@ from .constants import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, AUTH_URL, CLIENT_
 import json
 from urllib.parse import urlencode
 import base64
-from .spotify import get_user_id
+from .spotify import get_account_info
+
 
 from .misc import is_valid_email, build_state
 
@@ -64,8 +65,14 @@ def callback():
         session['access_token'] = access_token
         session['refresh_token'] = refresh_token
 
-        user_id = get_user_id(access_token)
-        flash(user_id)
+
+        info = get_account_info(access_token)
+
+        display_name = info['display_name']
+        email = info['email']
+        username = info['id']
+        pfp = info['images'][0]['url']
+
 
 
         return redirect(url_for('auth.home'))
