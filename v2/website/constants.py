@@ -20,7 +20,7 @@ TOKEN_URL = "https://accounts.spotify.com/api/token"
 RESPONSE_TYPE = "code"
 SCOPES = ["playlist-modify-public", "playlist-modify-private",
           "ugc-image-upload", "user-read-recently-played", "user-read-private", "user-read-email",]
-AUTH_URL = f"https://accounts.spotify.com/authorize?client_id={CLIENT_ID}&response_type={RESPONSE_TYPE}&redirect_uri={REDIRECT_URI}&scope={'%20'.join(SCOPES)}"
+AUTH_URL = "https://accounts.spotify.com/authorize"
 
 endpoints = {
     "create_playlist": "https://api.spotify.com/v1/me/playlists",

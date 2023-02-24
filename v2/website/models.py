@@ -1,12 +1,17 @@
 from . import db
 from mongoengine import Document, StringField, IntField, ListField, DictField, EmbeddedDocumentField
+from flask_login import UserMixin
 
 
-class User(Document):
-    spotify_username = StringField(required=True, unique=True)
+class User(Document, UserMixin):
+    spotify_username = StringField(required=True)
     spotify_email = StringField(required=True, unique=True)
+    spotify_id = StringField(required=True, unique=True)
     listen_data = DictField(required=True, default={})
     id = IntField(primary_key=True, required=True, unique=True)
+
+
+
 
 
 class Track(Document):

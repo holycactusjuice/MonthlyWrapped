@@ -207,11 +207,11 @@ def get_track_data(track):
     return track_data
 
 
-def get_user_id():
+def get_user_id(access_token):
     response = requests.get(
         GET_USER_ENDPOINT,
         headers={
-            "Authorization": f"Bearer {get_token()}"
+            "Authorization": "Bearer " + access_token,
         }
     )
 

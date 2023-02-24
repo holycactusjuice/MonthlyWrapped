@@ -2,7 +2,7 @@ import requests
 import json
 import datetime
 import base64
-from constants import *
+from .constants import *
 import string
 import secrets
 from urllib.parse import urlencode
@@ -45,3 +45,15 @@ def user_auth(client_id, response_type, redirect_uri, scopes):  # add state para
     auth_url = 'https://accounts.spotify.com/authorize?' + urlencode(data)
 
     return redirect(auth_url)
+
+
+def get_user_id(access_token):
+    response = requests.get(
+        endpoints['get_user'],
+        headers={
+            "Authorization": "Bearer " + access_token,
+        }
+    )
+
+    user_id = response.json()
+    return user_id
