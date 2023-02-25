@@ -14,7 +14,7 @@ class User(UserMixin, Document):
         display_name (str): user's spotify display name
         listen_data (dict): user's spotify listen data
         pfp (str): user's spotify profile picture image url
-        id (int): user's id in the database
+        _id (ObjectId): user's id in the database
     """
     _id = ObjectIdField(primary_key=True, required=True, unique=True)
     username = StringField(required=True, unique=True)
@@ -23,10 +23,10 @@ class User(UserMixin, Document):
     listen_data = DictField(required=True, default={})
     pfp = StringField()
 
-    def __init__(self, id, username, email, display_name, pfp, listen_data={}, *args, **kwargs):
+    def __init__(self, _id, username, email, display_name, pfp, listen_data={}, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
 
-        self._id = id
+        self._id = _id
         self.username = username
         self.email = email
 
