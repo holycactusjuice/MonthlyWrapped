@@ -1,9 +1,13 @@
-from flask import Flask
+from flask import Flask, flash
 from flask_login import LoginManager
 from pymongo import MongoClient
 from flask_pymongo import PyMongo
 import os
 from dotenv import load_dotenv
+import mongoengine
+from flask_login import UserMixin
+from bson.objectid import ObjectId
+
 
 load_dotenv()
 
@@ -30,13 +34,13 @@ def create_app():
     mongo = PyMongo()
     mongo.init_app(app)
 
-    # from .views import views
+    from .views import views
     from .auth import auth
 
-    # app.register_blueprint(views, url_prefix='/')
+    app.register_blueprint(views, url_prefix='/')
     app.register_blueprint(auth, url_prefix='/')
 
-    from .models import User, Track
+    from .models import User
 
     login_manager = LoginManager()
     login_manager.login_view = 'auth.login'
@@ -44,6 +48,11 @@ def create_app():
 
     @login_manager.user_loader
     def load_user(user_id):
-        return  # get user from db
+        user_document = users.find_one(
+            {'_id': ObjectId(user_id)})
+        if user_document:
+            return User.from_document(user_document)
+        else:
+            return None
 
     return app

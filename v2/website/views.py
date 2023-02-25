@@ -2,18 +2,14 @@ from flask import redirect, Blueprint, render_template, request, flash, jsonify,
 import requests
 from flask_login import login_required, current_user
 from . import db
-from spotify import get_user_id
 
 views = Blueprint('views', __name__)
+
 
 @views.route('/', methods=['GET', 'POST'])
 @login_required
 def home():
-    if request.method == 'GET':
-        access_token = session.get('access_token')
-        user_id = get_user_id(access_token)
-        flash(user_id)
-        return render_template('home.html')
+    if 'access_token' not in session:
+        return redirect(url_for('auth.login'))
     else:
-        return render_template('login.html')
-
+        return render_template('home.html', user=current_user)

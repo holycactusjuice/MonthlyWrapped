@@ -2,28 +2,16 @@ from flask import Blueprint, render_template, request, flash, redirect, url_for,
 import requests
 from .models import User
 from flask_login import login_user, logout_user, login_required, current_user
-from .constants import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL
 import json
 from urllib.parse import urlencode
-import base64
+from bson import ObjectId
+
+from . import db, users
 from .spotify import get_account_info
-
-
-from .misc import is_valid_email, build_state
+from .misc import build_state
+from .constants import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL
 
 auth = Blueprint('auth', __name__)
-
-
-@auth.route('/')
-@login_required
-def home():
-    if 'access_token' not in session:
-        return redirect(url_for('login'))
-    # Use the access_token to make requests to the Spotify API
-    # For example:
-    headers = {'Authorization': 'Bearer ' + session['access_token']}
-    response = requests.get('https://api.spotify.com/v1/me', headers=headers)
-    return response.text
 
 
 @auth.route('/login', methods=['GET', 'POST'])
@@ -34,7 +22,8 @@ def login():
 @auth.route('/spotify-login', methods=['GET', 'POST'])
 def spotify_login():
     response_type = 'code'
-    scopes = ["playlist-modify-public", "playlist-modify-private", "ugc-image-upload", "user-read-recently-played", "user-read-private", "user-read-email",]
+    scopes = ["playlist-modify-public", "playlist-modify-private", "ugc-image-upload",
+              "user-read-recently-played", "user-read-private", "user-read-email",]
     auth_params = {
         'response_type': response_type,
         'client_id': CLIENT_ID,
@@ -45,18 +34,19 @@ def spotify_login():
 
     return redirect(AUTH_URL + "?" + urlencode(auth_params))
 
-    
+
 @auth.route('/callback')
 def callback():
     auth_token = request.args['code']
-    data = {
+    params = {
         'grant_type': 'authorization_code',
         'code': auth_token,
         'redirect_uri': REDIRECT_URI,
     }
-    headers = {'Authorization': 'Basic ' + CLIENT_CREDS_B64, 'Content-Type': 'application/x-www-form-urlencoded'}
+    headers = {'Authorization': 'Basic ' + CLIENT_CREDS_B64,
+               'Content-Type': 'application/x-www-form-urlencoded'}
 
-    response = requests.post(TOKEN_URL, params=data, headers=headers)
+    response = requests.post(TOKEN_URL, params=params, headers=headers)
     if response.status_code == 200:
         response_data = json.loads(response.text)
 
@@ -65,17 +55,25 @@ def callback():
         session['access_token'] = access_token
         session['refresh_token'] = refresh_token
 
-
         info = get_account_info(access_token)
-
-        display_name = info['display_name']
         email = info['email']
-        username = info['id']
-        pfp = info['images'][0]['url']
 
+        user = users.find_one({"email": email})
 
+        # if user not found, create new user and add to database
+        if user is None:
+            display_name = info['display_name']
+            username = info['id']
+            pfp = info['images'][0]['url']
 
-        return redirect(url_for('auth.home'))
+            user = User(_id=ObjectId(), username=username, email=email,
+                        display_name=display_name, pfp=pfp, listen_data={})
+            users.insert_one(user.dict())
+            flash('user added to database')
+
+        user = User.from_email(email)  # loads with email
+        login_user(user, remember=True)
+        return redirect(url_for('views.home'))
     else:
+        flash('status not 200')
         return redirect(url_for('auth.login'))
-        
