@@ -13,3 +13,9 @@ def home():
         return redirect(url_for('auth.login'))
     else:
         return render_template('home.html', user=current_user)
+
+
+@views.route('/update', methods=['GET', 'POST'])
+@login_required
+def update():
+    return render_template('update.html', user=current_user)

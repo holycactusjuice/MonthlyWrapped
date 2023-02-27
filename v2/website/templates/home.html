@@ -3,6 +3,13 @@
 
 <h2 align="center">Home</h2>
 <h3 align="center">Welcome, {{ user.display_name }}</h3>
+<form action="{{ url_for('views.update') }}" , method="POST">
+    <br />
+    <div align="center">
+        <button type="update" class="btn btn-primary">update</button>
+    </div>
+</form>
+<br />
 <ul class="list-group list-group-flush" id="tracks">
     {% for track in range(5) %}
     <li class="list-group-item">{{track}}</li>

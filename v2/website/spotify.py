@@ -9,20 +9,20 @@ from urllib.parse import urlencode
 from flask import redirect
 
 
-def get_access_token(client_id, client_secret, redirect_uri):
-    """
-    Get access token for the given client_id and client_secret
-    """
+# def get_access_token(client_id, client_secret):
+#     """
+#     Get access token for the given client_id and client_secret
+#     """
 
-    auth_string = client_id + ':' + client_secret
-    auth_bytes = auth_string.encode('utf-8')
-    auth_base64 = str(base64.b64encode(auth_bytes), 'utf-8')
+#     auth_string = client_id + ':' + client_secret
+#     auth_bytes = auth_string.encode('utf-8')
+#     auth_base64 = str(base64.b64encode(auth_bytes), 'utf-8')
 
-    url = TOKEN_URL
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': 'Basic' + auth_base64
-    }
+#     url = TOKEN_URL
+#     headers = {
+#         'Content-Type': 'application/x-www-form-urlencoded',
+#         'Authorization': 'Basic' + auth_base64
+#     }
 
 
 def user_auth(client_id, response_type, redirect_uri, scopes):  # add state parameter

@@ -9,7 +9,7 @@ from bson import ObjectId
 from . import db, users
 from .spotify import get_account_info
 from .misc import build_state
-from .constants import CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL
+from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL
 
 auth = Blueprint('auth', __name__)
 
