@@ -3,6 +3,8 @@ import requests
 from flask_login import login_required, current_user
 from . import db
 
+from .spotify import get_recent_tracks
+
 views = Blueprint('views', __name__)
 
 
@@ -18,4 +20,8 @@ def home():
 @views.route('/update', methods=['GET', 'POST'])
 @login_required
 def update():
+    access_token = session.get('access_token')
+    recent_tracks = get_recent_tracks(access_token, 10)
+    for track in recent_tracks:
+        flash(track.title)
     return render_template('update.html', user=current_user)

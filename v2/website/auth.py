@@ -43,10 +43,13 @@ def callback():
         'code': auth_token,
         'redirect_uri': REDIRECT_URI,
     }
-    headers = {'Authorization': 'Basic ' + CLIENT_CREDS_B64,
-               'Content-Type': 'application/x-www-form-urlencoded'}
-
+    headers = {
+        'Authorization': 'Basic ' + CLIENT_CREDS_B64,
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    
     response = requests.post(TOKEN_URL, params=params, headers=headers)
+    flash('status ', response.status_code)
     if response.status_code == 200:
         response_data = json.loads(response.text)
 
@@ -55,7 +58,7 @@ def callback():
         session['access_token'] = access_token
         session['refresh_token'] = refresh_token
 
-        info = get_account_info(access_token)
+        info = get_account_info(session.get('access_token'))
         email = info['email']
 
         user = users.find_one({"email": email})
@@ -75,5 +78,13 @@ def callback():
         login_user(user, remember=True)
         return redirect(url_for('views.home'))
     else:
-        flash('status not 200')
         return redirect(url_for('auth.login'))
+
+
+@auth.route('/logout')
+@login_required
+def logout():
+    # Clear the session and redirect the user to the Spotify logout URL
+    session.clear()
+    return redirect('https://www.spotify.com/logout/')
+    return direct(url_for('auth.login'))

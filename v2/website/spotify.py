@@ -25,6 +25,16 @@ from .constants import *
 #         'Content-Type': 'application/x-www-form-urlencoded',
 #         'Authorization': 'Basic' + auth_base64
 #     }
+class Track():
+    def __init__(self, track_id, title, artists, album, album_art_url, length, last_listen=None, duration=None):
+        self.track_id = track_id
+        self.title = title
+        self.artists = artists
+        self.album = album
+        self.album_art_url = album_art_url
+        self.length = length
+        self.last_listen = last_listen
+        self.duration = duration
 
 
 def user_auth(client_id, response_type, redirect_uri, scopes):  # add state parameter
@@ -50,37 +60,36 @@ def user_auth(client_id, response_type, redirect_uri, scopes):  # add state para
 
 
 def get_account_info(access_token):
+    url = endpoints['get_user']
+    headers = {
+        "Authorization": "Bearer " + access_token,
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
     response = requests.get(
-        endpoints['get_user'],
-        headers={
-            "Authorization": "Bearer " + access_token,
-        }
+        url=url, headers=headers
     )
+    print('--------------------------------')
+    print(response.json())
+    print('--------------------------------')
     return response.json()
 
 
-def get_track_data(track):
+
+def get_track_data(track_json):
     """
     Gets the track data given a track json
     """
-    # track_id = track['track']['id']
-    title = track['track']['name']
+    track_id = track_json['track']['id']
+    title = track_json['track']['name']
     artists = [artist["name"]
-               for artist in track["track"]["artists"]]
-    album = track["track"]["album"]["name"]
-    album_art_url = track["track"]["album"]["images"][0]["url"]
-    length = int(track['track']['duration_ms'] / 1000)
+               for artist in track_json["track"]["artists"]]
+    album = track_json["track"]["album"]["name"]
+    album_art_url = track_json["track"]["album"]["images"][0]["url"]
+    length = int(track_json['track']['duration_ms'] / 1000)
 
-    track_data = {
-        # "track_id": track_id,
-        'title': title,
-        'artists': artists,
-        'album': album,
-        'album_art_url': album_art_url,
-        'length': length,
-    }
+    track = Track(track_id, title, artists, album, album_art_url, length)
 
-    return track_data
+    return track
 
 
 def get_recent_tracks(access_token, limit):
@@ -105,58 +114,60 @@ def get_recent_tracks(access_token, limit):
         "Authorization": f"Bearer {access_token}"
     }
     params = {
-        "before": int(TIME),
+        "before": int(TIME), # must be int
         "limit": limit
     }
-    reponse = requests.get(
+    response = requests.get(
         url=url,
         headers=headers,
         params=params
     )
 
-    resp_json = reponse.json()
+    resp_json = response.json()
 
     recent_tracks = resp_json['items']
 
     # reverse list since the last played track is given first
     recent_tracks.reverse()
 
-    tracks = {}
+    tracks = []
 
-    for i, track in enumerate(recent_tracks):
+    for i, track_json in enumerate(recent_tracks):
         # print(track)
 
-        track_id = track['track']['id']
+        track = get_track_data(track_json)
+        track_id = track.track_id
 
-        if track_id not in tracks:
+        if track_id not in [track.track_id for track in tracks]:
 
-            track_data = get_track_data(track)
-            tracks[track_id] = track_data
+            # set last_listen and duration to -1; we will replace later
+            track.last_listen = -1
+            track.duration = -1
+
+            tracks.append(track)
 
         # get the time this track ended in unix timestamp
         # time_string is the format: 2023-02-12T17:18:28.679Z
-        played_at = played_at_unix(track['played_at'])
+        played_at = played_at_unix(track_json['played_at'])
+        # update last_listen if this listen is more recent
+        track.last_listen = max(played_at, track.last_listen)
 
-        # if not first track in list and this listen has not been recorded
-        if i != 0 and played_at not in tracks[track_id]["listen_data"].keys():
-
-            track_length = int(tracks[track_id]['track_length'])
-
+        # updating duration listened
+        # we can't calculate listen time for the first track since there is no track before it
+        if i != 0:
+            length = int(track.length)
             # get the time the last track ended in unix timestamp
             last_track = recent_tracks[i - 1]
             last_played_at = played_at_unix(last_track['played_at'])
-
             # duration is the difference between when the last track ended (when this track started) and when this track ended
             duration = played_at - last_played_at
-
             # duration may be greater than track length if:
             #   - the user took a break before playing the track
             #   - the user paused the track
             #   - this is the first song in the session
             # so if duration > track_length, make duration = track_length
-            duration = min(duration, track_length)
+            duration = min(duration, length)
 
-            # add this listen to the user's data
-            tracks[track_id]["listen_data"][played_at] = duration
+            track.duration += duration
 
     return tracks
