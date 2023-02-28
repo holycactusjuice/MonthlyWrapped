@@ -11,8 +11,8 @@
 </form>
 <br />
 <ul class="list-group list-group-flush" id="tracks">
-    {% for track in range(5) %}
-    <li class="list-group-item">{{track}}</li>
+    {% for track in user.listen_data %}
+    <li class="list-group-item">{{track_id['title']}}</li>
     {% endfor %}
 </ul>
 {% endblock %}

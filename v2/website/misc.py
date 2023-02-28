@@ -1,6 +1,7 @@
 import re
 import string
 import secrets
+import datetime
 
 
 def is_valid_email(email):
@@ -29,3 +30,8 @@ def build_state():
     )
 
     return state
+
+
+def played_at_unix(played_at):
+    return int(datetime.datetime.strptime(
+        played_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
