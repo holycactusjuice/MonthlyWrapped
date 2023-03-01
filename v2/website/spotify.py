@@ -26,7 +26,7 @@ from .constants import *
 #         'Authorization': 'Basic' + auth_base64
 #     }
 class Track():
-    def __init__(self, track_id, title, artists, album, album_art_url, length, last_listen=None, duration=None):
+    def __init__(self, track_id, title, artists, album, album_art_url, length, last_listen=-1, time_listened=0):
         self.track_id = track_id
         self.title = title
         self.artists = artists
@@ -34,7 +34,7 @@ class Track():
         self.album_art_url = album_art_url
         self.length = length
         self.last_listen = last_listen
-        self.duration = duration
+        self.time_listened = time_listened
 
 
 def user_auth(client_id, response_type, redirect_uri, scopes):  # add state parameter
@@ -142,12 +142,6 @@ def get_recent_tracks(access_token, limit):
         track_id = track.track_id
 
         if track_id not in [track.track_id for track in tracks]:
-
-            # set last_listen to -1; we will replace later
-            track.last_listen = -1
-            # set duration to 0; duration is cumulative so we need to start at 0
-            track.duration = 0
-
             tracks.append(track)
 
         # get the time this track ended in unix timestamp
@@ -156,22 +150,22 @@ def get_recent_tracks(access_token, limit):
         # update last_listen if this listen is more recent
         track.last_listen = max(played_at, track.last_listen)
 
-        # updating duration listened
+        # updating time_listened
         # we can't calculate listen time for the first track since there is no track before it
         if i != 0:
             length = int(track.length)
             # get the time the last track ended in unix timestamp
             last_track = recent_tracks[i - 1]
             last_played_at = played_at_unix(last_track['played_at'])
-            # duration is the difference between when the last track ended (when this track started) and when this track ended
-            duration = played_at - last_played_at
-            # duration may be greater than track length if:
+            # time_listened is the difference between when the last track ended (when this track started) and when this track ended
+            time_listened = played_at - last_played_at
+            # time_listened may be greater than track length if:
             #   - the user took a break before playing the track
             #   - the user paused the track
             #   - this is the first song in the session
-            # so if duration > track_length, make duration = track_length
-            duration = min(duration, length)
+            # so if time_listened > track_length, make time_listened = track_length
+            time_listened = min(time_listened, length)
 
-            track.duration += duration
+            track.time_listened += time_listened
 
     return tracks

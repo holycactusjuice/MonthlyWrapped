@@ -1,7 +1,7 @@
 from flask import redirect, Blueprint, render_template, request, flash, jsonify, url_for, session
 import requests
 from flask_login import login_required, current_user
-from . import db
+from . import users
 
 from .spotify import get_recent_tracks
 
@@ -22,6 +22,10 @@ def home():
 def update():
     access_token = session.get('access_token')
     recent_tracks = get_recent_tracks(access_token, 10)
+    
+    user_document = users.find_one({"email": current_user.email})
+    flash(user_document)
     for track in recent_tracks:
-        flash(track.title)
+        query = {'listen_data.track_id': track.track_id}
+
     return render_template('update.html', user=current_user)
