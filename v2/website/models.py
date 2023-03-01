@@ -20,10 +20,10 @@ class User(UserMixin, Document):
     username = StringField(required=True, unique=True)
     email = EmailField(required=True, unique=True)
     display_name = StringField(required=True)
-    listen_data = ListField(required=True, default=[])
+    listen_data = DictField(required=True, default={})
     pfp = StringField()
 
-    def __init__(self, _id, username, email, display_name, pfp, listen_data=[], *args, **kwargs):
+    def __init__(self, _id, username, email, display_name, pfp, listen_data={}, *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
 
         self._id = _id
@@ -39,7 +39,7 @@ class User(UserMixin, Document):
         Returns a dictionary representation of the User object
             * useful for inserting into MongoDB
         """
-        return {
+        info = {
             '_id': self._id,
             'username': self.username,
             'email': self.email,
@@ -47,9 +47,40 @@ class User(UserMixin, Document):
             'listen_data': self.listen_data,
             'pfp': self.pfp,
         }
+        return info
 
     def get_id(self):
         return str(self._id)
+    
+    def update_listen_data(self, track):
+        """
+        Updates the user's listen data given a track object
+        
+        Args:
+            self (user)
+            track (Track): track object to be added to user's listen data
+        Returns:
+            None (updates user listen data in place)
+        """
+        track_info = track
+        # if the track isn't already in the user's listen data, add it
+        if track.track_id not in self.listen_data.keys():
+            self.listen_data[track.track_id] = (track.__dict__)
+
+        track_id = track.track_id
+        last_listen = track.last_listen
+
+        # if track.last_listen is greater than the last_listen stored in the user's data
+        # then this listen has not yet been recorded
+        if last_listen > self.listen_data[track_id]['last_listen']:
+            # update the following fields:
+            #   - last listen
+            #   - listen count
+            #   - total listen time
+            self.listen_data[track_id]['last_listen'] = last_listen
+            time_listened = track.time_listened
+            self.listen_data[track_id]['time_listened'] += time_listened
+            self.listen_data[track_id]['listen_count'] += 1
 
     @classmethod
     def from_email(cls, email):
@@ -82,6 +113,8 @@ class User(UserMixin, Document):
         pfp = user_doc['pfp']
 
         return User(_id, username, email, display_name, pfp, listen_data)
+    
+    
 
 
 class Track(Document):
