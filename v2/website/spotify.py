@@ -74,10 +74,14 @@ def get_account_info(access_token):
     return response.json()
 
 
-
 def get_track_data(track_json):
     """
     Gets the track data given a track json
+
+    Args:
+        track_json (dict): track json received from Spotify API
+    Returns:
+        track (Track): Track object with track data
     """
     track_id = track_json['track']['id']
     title = track_json['track']['name']
@@ -94,35 +98,34 @@ def get_track_data(track_json):
 
 def get_recent_tracks(access_token, limit):
     """
-    Gets user's recent tracks from Spotify API and returns the following information:
-    - track name
-    - artist name(s)
-    - album
-    - album art url
-    - time played at
-    - duration played for
+    Gets user's recent tracks from Spotify API and returns a list of Track objects
 
     Args:
         access_token (str): Spotify access token
         limit (int): number of tracks to return
 
     Returns:
-        tracks (dict): track_id : track_info
+        tracks (list): list of Track objects
     """
+
+    # kwargs for GET request
     url = endpoints['get_recently_played']
     headers = {
         "Authorization": f"Bearer {access_token}"
     }
     params = {
-        "before": int(TIME), # must be int
+        "before": int(TIME),  # must be int
         "limit": limit
     }
+
+    # send GET request to Spotify's get recently played endpoint
     response = requests.get(
         url=url,
         headers=headers,
         params=params
     )
 
+    # get json from response object
     resp_json = response.json()
 
     recent_tracks = resp_json['items']
@@ -132,17 +135,18 @@ def get_recent_tracks(access_token, limit):
 
     tracks = []
 
+    # iterate through each track json in recent_tracks to turn each one into a Track object
     for i, track_json in enumerate(recent_tracks):
-        # print(track)
 
         track = get_track_data(track_json)
         track_id = track.track_id
 
         if track_id not in [track.track_id for track in tracks]:
 
-            # set last_listen and duration to -1; we will replace later
+            # set last_listen to -1; we will replace later
             track.last_listen = -1
-            track.duration = -1
+            # set duration to 0; duration is cumulative so we need to start at 0
+            track.duration = 0
 
             tracks.append(track)
 

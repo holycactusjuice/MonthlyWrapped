@@ -20,10 +20,10 @@ class User(UserMixin, Document):
     username = StringField(required=True, unique=True)
     email = EmailField(required=True, unique=True)
     display_name = StringField(required=True)
-    listen_data = DictField(required=True, default={})
+    listen_data = ListField(required=True, default=[])
     pfp = StringField()
 
-    def __init__(self, _id, username, email, display_name, pfp, listen_data={}, *args, **kwargs):
+    def __init__(self, _id, username, email, display_name, pfp, listen_data=[], *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
 
         self._id = _id
@@ -74,7 +74,7 @@ class User(UserMixin, Document):
         """
         Creates a User object from a dictionary retrieved from MongoDB
         """
-        _id = user_doc['_id']
+        _id = str(user_doc['_id'])
         username = user_doc['username']
         email = user_doc['email']
         display_name = user_doc['display_name']

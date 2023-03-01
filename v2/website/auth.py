@@ -47,7 +47,7 @@ def callback():
         'Authorization': 'Basic ' + CLIENT_CREDS_B64,
         'Content-Type': 'application/x-www-form-urlencoded'
     }
-    
+
     response = requests.post(TOKEN_URL, params=params, headers=headers)
     flash('status ', response.status_code)
     if response.status_code == 200:
@@ -70,11 +70,12 @@ def callback():
             pfp = info['images'][0]['url']
 
             user = User(_id=ObjectId(), username=username, email=email,
-                        display_name=display_name, pfp=pfp, listen_data={})
+                        display_name=display_name, pfp=pfp)
+
             users.insert_one(user.dict())
             flash('user added to database')
-
         user = User.from_email(email)  # loads with email
+        flash(user.__dict__)
         login_user(user, remember=True)
         return redirect(url_for('views.home'))
     else:
