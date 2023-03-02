@@ -62,37 +62,22 @@ class User(UserMixin, Document):
     def get_id(self):
         return str(self._id)
 
-    def update_listen_data(self, track):
+    def update_user(self):
         """
-        Updates the user's listen data given a track object
+        Updates the user's listen data by retrieving info from the database
 
         Args:
             self (user)
-            track (Track): track object to be added to user's listen data
         Returns:
             None (updates user listen data in place)
         """
-        track_info = track
-        # if the track isn't already in the user's listen data, add it
-        if track.track_id not in [track['track_id'] for track in self.listen_data]:
-            self.listen_data.append(track.__dict__)
+        username = self.username
+        user_doc = users.find_one({'username': username})
+        self.email = user_doc['email']
+        self.display_name = user_doc['display_name']
+        self.pfp = user_doc['pfp']
+        self.listen_data = user_doc['listen_data']
 
-        track_id = track.track_id
-        last_listen = track.last_listen
-
-        # if track.last_listen is greater than the last_listen stored in the user's data
-        # then this listen has not yet been recorded
-        query = {'listen_data.track_id': track_id}
-        user_track_data = users.find_one
-        if last_listen > self.listen_data[track_id]['last_listen']:
-            # update the following fields:
-            #   - last listen
-            #   - listen count
-            #   - total listen time
-            self.listen_data[track_id]['last_listen'] = last_listen
-            time_listened = track.time_listened
-            self.listen_data[track_id]['time_listened'] += time_listened
-            self.listen_data[track_id]['listen_count'] += 1
 
     @classmethod
     def from_email(cls, email):

@@ -33,18 +33,17 @@ def insert():
 
 
 def update():
-    student = {
-        'name': 'Patrick',
-        'age': 17
-    }
-    users.update_one({'name': 'Mr. Gibson'}, {
-                     "$addToSet": {'students': student}})
+    users.update_one(
+        {'name': 'Mr. Gibson', 'students.name': 'Patrick'},
+        {'$set': {'students.$.age': 22}}
+    )
 
 
 def find():
-    l = users.find({'students': {'name': 'Patrick'}})
+    l = users.update_one(
+        {'name': 'Patrick'},
+        {'$set': {'age': '20'}},
+    )
     return l
 
-
-people = find()
-print(list(people))
+update()

@@ -26,7 +26,7 @@ from .constants import *
 #         'Authorization': 'Basic' + auth_base64
 #     }
 class Track():
-    def __init__(self, track_id, title, artists, album, album_art_url, length, last_listen=-1, time_listened=0):
+    def __init__(self, track_id, title, artists, album, album_art_url, length, last_listen=-1, listen_count=0, time_listened=0):
         self.track_id = track_id
         self.title = title
         self.artists = artists
@@ -34,7 +34,9 @@ class Track():
         self.album_art_url = album_art_url
         self.length = length
         self.last_listen = last_listen
+        self.listen_count = listen_count
         self.time_listened = time_listened
+
 
 
 def user_auth(client_id, response_type, redirect_uri, scopes):  # add state parameter
@@ -146,7 +148,7 @@ def get_recent_tracks(access_token, limit):
 
     recent_tracks = resp_json['items']
 
-    # reverse list since the last played track is given first
+    # reverse list since Spotify API gives last played track first
     recent_tracks.reverse()
 
     tracks = []
@@ -154,34 +156,60 @@ def get_recent_tracks(access_token, limit):
     # iterate through each track json in recent_tracks to turn each one into a Track object
     for i, track_json in enumerate(recent_tracks):
 
+        # we can't calculate listen time for the first track since there is no track before it
+        # so skip the iteration if i == 0
+        if i == 0:
+            continue
+
         track = get_track_data(track_json)
         track_id = track.track_id
 
+        # if the track isn't already in tracks, add it
         if track_id not in [track.track_id for track in tracks]:
             tracks.append(track)
+        
+        # at this point the track is in tracks
+        # find the index of the track in tracks
+        for j in range(len(tracks)):
+            if tracks[j].track_id == track_id:
+                track_index = j
+                break
+        
+        # with the index, the track can now be updated
+        # update the following fields:
+        #   - last_listen
+        #   - listen_count
+        #   - time_listened
 
-        # get the time this track ended in unix timestamp
-        # time_string is the format: 2023-02-12T17:18:28.679Z
+
+        # updating last_listen
+
+        # get the time this track ended
         played_at = played_at_unix(track_json['played_at'])
+        # print(played_at)
         # update last_listen if this listen is more recent
-        track.last_listen = max(played_at, track.last_listen)
+        tracks[track_index].last_listen = max(played_at, track.last_listen)
+
+
+        # updating listen_count
+        tracks[track_index].listen_count += 1
+
 
         # updating time_listened
-        # we can't calculate listen time for the first track since there is no track before it
-        if i != 0:
-            length = int(track.length)
-            # get the time the last track ended in unix timestamp
-            last_track = recent_tracks[i - 1]
-            last_played_at = played_at_unix(last_track['played_at'])
-            # time_listened is the difference between when the last track ended (when this track started) and when this track ended
-            time_listened = played_at - last_played_at
-            # time_listened may be greater than track length if:
-            #   - the user took a break before playing the track
-            #   - the user paused the track
-            #   - this is the first song in the session
-            # so if time_listened > track_length, make time_listened = track_length
-            time_listened = min(time_listened, length)
 
-            track.time_listened += time_listened
+        length = int(track.length)
+        # get the time the last track ended in unix timestamp
+        last_track = recent_tracks[i - 1]
+        last_played_at = played_at_unix(last_track['played_at'])
+        # time_listened is the difference between when the last track ended (when this track started) and when this track ended
+        time_listened = played_at - last_played_at
+        # time_listened may be greater than track length if:
+        #   - the user took a break before playing the track
+        #   - the user paused the track
+        #   - this is the first song in the session
+        # so if time_listened > track_length, make time_listened = track_length
+        time_listened = min(time_listened, length)
+        tracks[track_index].time_listened += time_listened
+
 
     return tracks
