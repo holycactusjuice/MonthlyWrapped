@@ -98,8 +98,24 @@ def get_track_data(track_json):
 
 def get_recent_tracks(access_token, limit):
     """
-    Gets user's recent tracks from Spotify API and returns a list of Track objects
-
+    Gets user's recent tracks from Spotify API and returns a list of Track objects in the following format:
+    [
+        {
+            'track_id' (str): 'track1',
+            'title' (str): 'track1_title',
+            'artists' (list): ['artist1', 'artist2'],
+            'album' (str): 'album',
+            'album_art_url' (str): 'j3208qprum1pr82',
+            'length' (int): 123,
+            'last_listen' (int): 1234567890,
+            'listen_count' (int): 123,
+            'time_listened' (int): 123456,
+        },
+        {
+            'track_id' (str): 'track2',
+            ...
+        }
+    ]
     Args:
         access_token (str): Spotify access token
         limit (int): number of tracks to return

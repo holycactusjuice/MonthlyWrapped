@@ -75,7 +75,7 @@ def callback():
             users.insert_one(user.dict())
             flash('user added to database')
         user = User.from_email(email)  # loads with email
-        flash(user.__dict__)
+        flash(user.dict())
         login_user(user, remember=True)
         return redirect(url_for('views.home'))
     else:

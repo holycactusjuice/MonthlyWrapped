@@ -22,10 +22,12 @@ def home():
 def update():
     access_token = session.get('access_token')
     recent_tracks = get_recent_tracks(access_token, 10)
-    
-    user_document = users.find_one({"email": current_user.email})
-    flash(user_document)
+
+    user = users.find_one({"email": current_user.email})
+    user['listen_data']
+
     for track in recent_tracks:
         query = {'listen_data.track_id': track.track_id}
+        users.update_one()
 
-    return render_template('update.html', user=current_user)
+    return redirect(url_for(''))

@@ -1,7 +1,16 @@
 from . import users
-from mongoengine import Document, StringField, IntField, ListField, DictField, EmailField, ObjectIdField
+from mongoengine import Document, EmbeddedDocument, StringField, IntField, ListField, DictField, EmailField, ObjectIdField, EmbeddedDocumentField
 from flask_login import UserMixin
-from bson import ObjectId
+
+
+class Track(EmbeddedDocument):
+    title = StringField(required=True)
+    artists = ListField(StringField(), required=True)
+    album = StringField(required=True)
+    art = StringField(required=True)  # url for album art
+    length = IntField(required=True)  # in seconds
+    id = StringField(primary_key=True, required=True,
+                     unique=True)  # same as spotify_id
 
 
 class User(UserMixin, Document):
@@ -20,10 +29,11 @@ class User(UserMixin, Document):
     username = StringField(required=True, unique=True)
     email = EmailField(required=True, unique=True)
     display_name = StringField(required=True)
-    listen_data = DictField(required=True, default={})
+    listen_data = ListField(EmbeddedDocumentField(
+        Track), required=True, default=[])
     pfp = StringField()
 
-    def __init__(self, _id, username, email, display_name, pfp, listen_data={}, *args, **kwargs):
+    def __init__(self, _id, username, email, display_name, pfp, listen_data=[], *args, **kwargs):
         super(User, self).__init__(*args, **kwargs)
 
         self._id = _id
@@ -51,11 +61,11 @@ class User(UserMixin, Document):
 
     def get_id(self):
         return str(self._id)
-    
+
     def update_listen_data(self, track):
         """
         Updates the user's listen data given a track object
-        
+
         Args:
             self (user)
             track (Track): track object to be added to user's listen data
@@ -64,14 +74,16 @@ class User(UserMixin, Document):
         """
         track_info = track
         # if the track isn't already in the user's listen data, add it
-        if track.track_id not in self.listen_data.keys():
-            self.listen_data[track.track_id] = (track.__dict__)
+        if track.track_id not in [track['track_id'] for track in self.listen_data]:
+            self.listen_data.append(track.__dict__)
 
         track_id = track.track_id
         last_listen = track.last_listen
 
         # if track.last_listen is greater than the last_listen stored in the user's data
         # then this listen has not yet been recorded
+        query = {'listen_data.track_id': track_id}
+        user_track_data = users.find_one
         if last_listen > self.listen_data[track_id]['last_listen']:
             # update the following fields:
             #   - last listen
@@ -113,15 +125,3 @@ class User(UserMixin, Document):
         pfp = user_doc['pfp']
 
         return User(_id, username, email, display_name, pfp, listen_data)
-    
-    
-
-
-class Track(Document):
-    title = StringField(required=True)
-    artists = ListField(StringField(), required=True)
-    album = StringField(required=True)
-    art = StringField(required=True)  # url for album art
-    length = IntField(required=True)  # in seconds
-    id = StringField(primary_key=True, required=True,
-                     unique=True)  # same as spotify_id
