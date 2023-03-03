@@ -75,7 +75,6 @@ def callback():
             users.insert_one(user.dict())
             flash('user added to database')
         user = User.from_email(email)  # loads with email
-        flash(user.dict())
         login_user(user, remember=True)
         return redirect(url_for('views.home'))
     else:
@@ -86,6 +85,7 @@ def callback():
 @login_required
 def logout():
     # Clear the session and redirect the user to the Spotify logout URL
-    session.clear()
+    logout_user()
+    # session.clear()
     return redirect('https://www.spotify.com/logout/')
-    return direct(url_for('auth.login'))
+    # return redirect(url_for('auth.login'))

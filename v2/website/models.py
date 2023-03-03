@@ -78,6 +78,24 @@ class User(UserMixin, Document):
         self.pfp = user_doc['pfp']
         self.listen_data = user_doc['listen_data']
 
+    def get_top_tracks_by_listen_count(self, n):
+        """
+        Returns a list of the user's top n tracks based on listen count
+
+        Args:
+            self (User)
+            n (int): number of top tracks to return
+        Returns:
+            top_tracks (list): list of user's top n tracks based on listen count
+        """
+        self.update_user()
+
+        listen_data = self.listen_data
+        listen_data.sort(key=lambda x: x['listen_count'], reverse=True)
+
+        top_tracks = listen_data[:n]
+
+        return top_tracks
 
     @classmethod
     def from_email(cls, email):
