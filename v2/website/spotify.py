@@ -38,7 +38,6 @@ class Track():
         self.time_listened = time_listened
 
 
-
 def user_auth(client_id, response_type, redirect_uri, scopes):  # add state parameter
     """
     Requests user authorization
@@ -162,38 +161,25 @@ def get_recent_tracks(access_token, limit):
             continue
 
         track = get_track_data(track_json)
-        track_id = track.track_id
 
-        # if the track isn't already in tracks, add it
-        if track_id not in [track.track_id for track in tracks]:
-            tracks.append(track)
-        
-        # at this point the track is in tracks
-        # find the index of the track in tracks
-        for j in range(len(tracks)):
-            if tracks[j].track_id == track_id:
-                track_index = j
-                break
-        
+        # add the track to tracks
+        tracks.append(track)
+
         # with the index, the track can now be updated
         # update the following fields:
         #   - last_listen
         #   - listen_count
         #   - time_listened
 
-
         # updating last_listen
 
         # get the time this track ended
         played_at = played_at_unix(track_json['played_at'])
-        # print(played_at)
-        # update last_listen if this listen is more recent
-        tracks[track_index].last_listen = max(played_at, track.last_listen)
-
+        track.last_listen = played_at
 
         # updating listen_count
-        tracks[track_index].listen_count += 1
 
+        track.listen_count = 1
 
         # updating time_listened
 
@@ -209,7 +195,8 @@ def get_recent_tracks(access_token, limit):
         #   - this is the first song in the session
         # so if time_listened > track_length, make time_listened = track_length
         time_listened = min(time_listened, length)
-        tracks[track_index].time_listened += time_listened
+        track.time_listened = time_listened
 
+        tracks.append(track)
 
     return tracks
