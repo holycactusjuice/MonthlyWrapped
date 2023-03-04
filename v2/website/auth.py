@@ -21,6 +21,7 @@ def login():
 
 @auth.route('/spotify-login', methods=['GET', 'POST'])
 def spotify_login():
+    flash('spotify login')
     response_type = 'code'
     scopes = ["playlist-modify-public", "playlist-modify-private", "ugc-image-upload",
               "user-read-recently-played", "user-read-private", "user-read-email",]
