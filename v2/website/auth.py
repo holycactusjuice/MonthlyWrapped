@@ -24,7 +24,7 @@ def spotify_login():
     flash('spotify login')
     response_type = 'code'
     scopes = ["playlist-modify-public", "playlist-modify-private", "ugc-image-upload",
-              "user-read-recently-played", "user-read-private", "user-read-email",]
+              "user-read-recently-played", "user-read-private", "user-read-email"]
     auth_params = {
         'response_type': response_type,
         'client_id': CLIENT_ID,
@@ -60,22 +60,23 @@ def callback():
         session['refresh_token'] = refresh_token
 
         info = get_account_info(session.get('access_token'))
-        email = info['email']
+        username = info['id']
+        
 
-        user = users.find_one({"email": email})
+        user = users.find_one({"username": username})
 
         # if user not found, create new user and add to database
         if user is None:
+            email = info['email']
             display_name = info['display_name']
-            username = info['id']
             pfp = info['images'][0]['url']
 
             user = User(_id=ObjectId(), username=username, email=email,
-                        display_name=display_name, pfp=pfp)
+                        display_name=display_name, pfp=pfp, access_token=access_token, refresh_token=refresh_token)
 
             users.insert_one(user.dict())
             flash('user added to database')
-        user = User.from_email(email)  # loads with email
+        user = User.from_username(username)  # loads with email
         login_user(user, remember=True)
         return redirect(url_for('views.home'))
     else:

@@ -97,7 +97,7 @@ def get_track_data(track_json):
     return track
 
 
-def get_recent_tracks(access_token, limit):
+def get_recent_tracks(access_token, limit=50):
     """
     Gets user's recent tracks from Spotify API and returns a list of Track objects in the following format:
     [
@@ -141,6 +141,11 @@ def get_recent_tracks(access_token, limit):
         headers=headers,
         params=params
     )
+
+    # if the response gives a 401 error, the access token has expired
+    # return -1 to indicate this
+    if response.status_code == 401:
+        return -1
 
     # get json from response object
     resp_json = response.json()
@@ -200,3 +205,43 @@ def get_recent_tracks(access_token, limit):
         tracks.append(track)
 
     return tracks
+
+
+def swap_tokens(refresh_token):
+    """
+    Swaps the current refresh token for a new access token (and refresh token if the last one has expired)
+
+    Args:
+        refresh_token (str): old refresh token
+
+    Returns:
+        new_access_token (str): new access token
+    """
+    url = 'https://accounts.spotify.com/api/token'
+    headers = {
+        'Authorization': 'Basic ' + CLIENT_CREDS_B64,
+        'Content-Type': 'application/x-www-form-urlencoded',
+    }
+    params = {
+        'grant_type': 'refresh_token',
+        'refresh_token': refresh_token
+    }
+
+    response = requests.post(
+        url=url, headers=headers, data=params
+    )
+    resp_json = response.json()
+
+    new_access_token = resp_json['access_token']
+    
+    tokens = {
+        'access_token': new_access_token
+    }
+    
+    # Spotiy only gives a refresh token if the last one has expired
+    # check if the response json has a refresh token and return
+    if 'refresh_token' in resp_json:
+        new_refresh_token = resp_json['refresh_token']
+        tokens['refresh_token'] = new_refresh_token
+    
+    return tokens

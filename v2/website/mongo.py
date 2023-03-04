@@ -15,35 +15,5 @@ users = db['users']
 tracks = db['tracks']
 
 
-def insert():
-    document = {
-        'name': 'Mr. Gibson',
-        'students': [
-            {
-                'name': 'Yiyan',
-                'age': '17'
-            },
-            {
-                'name': 'Annika',
-                'age': 18
-            }
-        ]
-    }
-    users.insert_one(document)
-
-
-def update():
-    users.update_one(
-        {'name': 'Mr. Gibson', 'students.name': 'Patrick'},
-        {'$set': {'students.$.age': 22}}
-    )
-
-
-def find():
-    l = users.update_one(
-        {'name': 'Patrick'},
-        {'$set': {'age': '20'}},
-    )
-    return l
-
-update()
+def get_user_document(user_id):
+    return users.find_one({'_id': user_id})
