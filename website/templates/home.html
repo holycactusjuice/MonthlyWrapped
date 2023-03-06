@@ -1,21 +1,22 @@
-{% extends "base.html" %} {% block title %}Home{% endblock %} {% block content
+{% extends 'base.html' %} {% block title %}Home{% endblock %} {% block content
 %}
-<h1 align="center">Home</h1>
-<ul class="list-group list-group-flush" id="notes">
-    <!-- {% for note in user.notes %}
-  <li class="list-group-item">
-    {{ note.data }}
-    <button type="button" class="close" onClick="deleteNote({{ note.id }})">
-      <span aria-hidden="true">&times;</span>
-    </button>
-  </li>
-  {% endfor %} -->
-</ul>
 
-<form method="POST" , action="/update">
+<h2 align="center">Home</h2>
+<h3 align="center">Welcome, {{ user.display_name }}</h3>
+<ul class="list-group list-group-flush" id="tracks">
+    {% for track in user.get_top_tracks_by_time_listened(5) %}
+    <li class="list-group-item">
+        {{ track['title'] }}, {{ track['listen_count'] }}, {{
+        track['time_listened']}}
+    </li>
+    {% endfor %}
+</ul>
+<form action="{{ url_for('views.update') }}" , method="POST">
     <br />
     <div align="center">
         <button type="update" class="btn btn-primary">update</button>
     </div>
 </form>
+<br />
+
 {% endblock %}

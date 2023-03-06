@@ -1,23 +1,38 @@
-from flask import Flask
+from flask import Flask, flash
 from flask_login import LoginManager
 from pymongo import MongoClient
 from flask_pymongo import PyMongo
+import os
+from dotenv import load_dotenv
+import mongoengine
+from flask_login import UserMixin
+from bson.objectid import ObjectId
 
-PASSWORD = '4qlOBbwf5PvVRr80'
-SECRET_KEY = 'key'
+
+load_dotenv()
+
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+CLIENT_ID = os.getenv("CLIENT_ID")
+REDIRECT_URI = os.getenv("REDIRECT_URI")
+MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD")
+MONGODB_KEY = os.getenv("MONGODB_KEY")
+DB_NAME = "monthlyWrappedDB"
+
 
 client = MongoClient(
-    f'mongodb+srv://cactus:{PASSWORD}@cluster0.t4brvzm.mongodb.net/test?retryWrites=true&w=majority')
-db = client['spotify-app']
+    f'mongodb+srv://cactus:{MONGODB_PASSWORD}@cluster0.t4brvzm.mongodb.net/test?retryWrites=true&w=majority')
+db = client[DB_NAME]
 users = db['users']
+tracks = db['tracks']
 
 
 def create_app():
     app = Flask(__name__)
-    app.config['SECRET_KEY'] = SECRET_KEY
-    # app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{DB_NAME}'
-    app.config['MONGO_URI'] = 'mongodb://localhost:27017/test'
-    mongo = PyMongo(app)
+    app.config['SECRET_KEY'] = MONGODB_KEY
+    app.config['MONGO_URI'] = f'mongodb://localhost:27017/{DB_NAME}'
+
+    mongo = PyMongo()
+    mongo.init_app(app)
 
     from .views import views
     from .auth import auth
@@ -28,11 +43,16 @@ def create_app():
     from .models import User
 
     login_manager = LoginManager()
-    login_manager.login_view = ('auth.login')
+    login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
 
     @login_manager.user_loader
-    def load_user(id):
-        return User.query.get(int(id))
+    def load_user(user_id):
+        user_document = users.find_one(
+            {'_id': ObjectId(user_id)})
+        if user_document:
+            return User.from_document(user_document)
+        else:
+            return None
 
     return app

@@ -1,110 +1,93 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 import requests
-import json
 from .models import User
-from werkzeug.security import generate_password_hash, check_password_hash
-from . import db
-from flask_login import login_user, login_required, logout_user, current_user
-import re
-from .spotify_constants import *
-from .spotify_api_test import get_user_id
+from flask_login import login_user, logout_user, login_required, current_user
+import json
+from urllib.parse import urlencode
+from bson import ObjectId
+
+from . import db, users
+from .spotify import get_account_info
+from .misc import build_state
+from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL
 
 auth = Blueprint('auth', __name__)
 
 
-def is_valid_email(email):
-    # Define the regular expression pattern to match a valid email address
-    pattern = re.compile(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$")
-
-    # Use the pattern to check if the email matches the regular expression
-    if pattern.match(email):
-        return True
-    return False
-
-
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
-    # return redirect(AUTH_URL)
-    return render_template('login.html', user=current_user)
+    return render_template('login.html')
 
 
-@auth.route('/login-spotify', methods=['GET', 'POST'])
-def login_spotify():
-    return redirect(AUTH_URL)
+@auth.route('/spotify-login', methods=['GET', 'POST'])
+def spotify_login():
+    flash('spotify login')
+    response_type = 'code'
+    scopes = ["playlist-modify-public", "playlist-modify-private", "ugc-image-upload",
+              "user-read-recently-played", "user-read-private", "user-read-email"]
+    auth_params = {
+        'response_type': response_type,
+        'client_id': CLIENT_ID,
+        'scope': " ".join(scopes),
+        'redirect_uri': REDIRECT_URI,
+        'state': build_state()
+    }
+
+    return redirect(AUTH_URL + "?" + urlencode(auth_params))
+
+
+@auth.route('/callback')
+def callback():
+    auth_token = request.args['code']
+    params = {
+        'grant_type': 'authorization_code',
+        'code': auth_token,
+        'redirect_uri': REDIRECT_URI,
+    }
+    headers = {
+        'Authorization': 'Basic ' + CLIENT_CREDS_B64,
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+
+    response = requests.post(TOKEN_URL, params=params, headers=headers)
+    flash('status ', response.status_code)
+    if response.status_code == 200:
+        response_data = json.loads(response.text)
+
+        access_token = response_data["access_token"]
+        refresh_token = response_data["refresh_token"]
+        session['access_token'] = access_token
+        session['refresh_token'] = refresh_token
+
+        info = get_account_info(session.get('access_token'))
+        username = info['id']
+        
+
+        user = users.find_one({"username": username})
+
+        # if user not found, create new user and add to database
+        if user is None:
+            email = info['email']
+            display_name = info['display_name']
+            pfp = info['images'][0]['url']
+
+            user = User(_id=ObjectId(), username=username, email=email,
+                        display_name=display_name, pfp=pfp, access_token=access_token, refresh_token=refresh_token)
+
+            users.insert_one(user.dict())
+            flash('user added to database')
+        user = User.from_username(username)  # loads with email
+        login_user(user, remember=True)
+        return redirect(url_for('views.home'))
+    else:
+        return redirect(url_for('auth.login'))
 
 
 @auth.route('/logout')
 @login_required
 def logout():
+    # Clear the session and redirect the user to the Spotify logout URL
     logout_user()
-    return redirect(url_for('auth.login'))
-
-
-@auth.route('/callback', methods=['GET', 'POST'])
-def callback():
-    """Exchange authorization code for access token and refresh token"""
-    code = request.args.get('code')
-    if code is None:
-        # Handle error case
-        flash('No code provided')
-
-        return redirect(url_for('auth.login'))
-    data = {
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': REDIRECT_URI,
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET
-    }
-    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
-    response = requests.post(TOKEN_URL, data=data, headers=headers)
-    if response.status_code == 200:
-        token_data = response.json()
-        session['access_token'] = token_data['access_token']
-        session['refresh_token'] = token_data['refresh_token']
-        # return redirect(url_for('views.home'))
-        user = current_user
-        flash(get_user_id())
-
-        login_user(user, remember=True)
-        flash(user.is_authenticated)
-
-        if user.is_authenticated:
-            flash('Successfully logged in')
-        return render_template("home.html", user=user)
-    else:
-        # Handle error case
-        return redirect(url_for('auth.login'))
-
-
-# @auth.route('/sign-up', methods=['GET', 'POST'])
-# def sign_up():
-#     if request.method == 'POST':
-#         email = request.form.get('email')
-#         username = request.form.get('username')
-#         password1 = request.form.get('password1')
-#         password2 = request.form.get('password2')
-
-#         user = User.query.filter_by(email=email).first()
-
-#         if user:
-#             flash('An account with that email already exists', category='error')
-#         elif not is_valid_email(email):
-#             flash('Please enter a valid email address.', category='error')
-#         elif password1 != password2:
-#             flash('Passwords do not match.', category='error')
-#         elif len(password1) < 6:
-#             flash('Password must be at least 6 characters.', category='error')
-#         else:
-#             new_user = User(email=email, username=username, password=generate_password_hash(
-#                 password1, method='sha256'))
-#             db.session.add(new_user)
-#             db.session.commit()
-
-#             login_user(new_user, remember=True)
-
-#             flash('Account created!', category='success')
-
-#             return redirect(url_for('views.home'))
-
-#     return render_template('sign_up.html', user=current_user)
+    # session.clear()
+    return redirect('https://www.spotify.com/logout/')
+    # return redirect(url_for('auth.login'))
