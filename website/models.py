@@ -39,6 +39,7 @@ class User(UserMixin, Document):
         Track), required=True, default=[])
 
     def __init__(self, _id, username, email, display_name, pfp, access_token, refresh_token, listen_data=[], *args, **kwargs):
+       
         super(User, self).__init__(*args, **kwargs)
 
         self._id = _id

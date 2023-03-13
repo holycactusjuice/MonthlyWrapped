@@ -6,10 +6,10 @@ import json
 from urllib.parse import urlencode
 from bson import ObjectId
 
-from . import db, users
+from . import users
 from .spotify import get_account_info
 from .misc import build_state
-from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL
+from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL, SCOPES
 
 auth = Blueprint('auth', __name__)
 
@@ -21,10 +21,10 @@ def login():
 
 @auth.route('/spotify-login', methods=['GET', 'POST'])
 def spotify_login():
+    session.clear()
     flash('spotify login')
     response_type = 'code'
-    scopes = ["playlist-modify-public", "playlist-modify-private", "ugc-image-upload",
-              "user-read-recently-played", "user-read-private", "user-read-email"]
+    scopes = SCOPES
     auth_params = {
         'response_type': response_type,
         'client_id': CLIENT_ID,
@@ -59,14 +59,14 @@ def callback():
         session['access_token'] = access_token
         session['refresh_token'] = refresh_token
 
-        info = get_account_info(session.get('access_token'))
-        username = info['id']
+        info = get_account_info(access_token)
+        print(info)
         
-
-        user = users.find_one({"username": username})
+        username = info['id']
+        user_doc = users.find_one({"username": username})
 
         # if user not found, create new user and add to database
-        if user is None:
+        if user_doc is None:
             email = info['email']
             display_name = info['display_name']
             pfp = info['images'][0]['url']
@@ -88,6 +88,6 @@ def callback():
 def logout():
     # Clear the session and redirect the user to the Spotify logout URL
     logout_user()
-    # session.clear()
+    session.clear()
     return redirect('https://www.spotify.com/logout/')
     # return redirect(url_for('auth.login'))

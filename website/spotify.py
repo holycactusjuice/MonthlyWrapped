@@ -61,6 +61,7 @@ def user_auth(client_id, response_type, redirect_uri, scopes):  # add state para
 
 
 def get_account_info(access_token):
+    # access_token = 'BQACYDnasg4aKAYeNkRW9Co2qOr9FraLidlZJwxNwAVUpqOk8C1Mk1epKPKElom57HznxsB1Z1yg1wSNGenRVIewTBchqvN3bYZVhns47qpN3_Tov4re8itZ5CKbQfgeyoyYUqXMUAF_qnWnFO4UaylQ3X2o7'
     url = endpoints['get_user']
     headers = {
         "Authorization": "Bearer " + access_token,
@@ -69,6 +70,7 @@ def get_account_info(access_token):
     response = requests.get(
         url=url, headers=headers
     )
+    print(access_token)
     print('--------------------------------')
     print(response.json())
     print('--------------------------------')
@@ -142,9 +144,9 @@ def get_recent_tracks(access_token, limit=50):
         params=params
     )
 
-    # if the response gives a 401 error, the access token has expired
+    # if the response gives a 401 or 403 error, the access token has expired
     # return -1 to indicate this
-    if response.status_code == 401:
+    if response.status_code in (401, 403):
         return -1
 
     # get json from response object

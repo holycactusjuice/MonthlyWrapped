@@ -23,7 +23,6 @@ client = MongoClient(
     f'mongodb+srv://cactus:{MONGODB_PASSWORD}@cluster0.t4brvzm.mongodb.net/test?retryWrites=true&w=majority')
 db = client[DB_NAME]
 users = db['users']
-tracks = db['tracks']
 
 
 def create_app():

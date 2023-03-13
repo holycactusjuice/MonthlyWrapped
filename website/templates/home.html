@@ -3,14 +3,6 @@
 
 <h2 align="center">Home</h2>
 <h3 align="center">Welcome, {{ user.display_name }}</h3>
-<ul class="list-group list-group-flush" id="tracks">
-    {% for track in user.get_top_tracks_by_time_listened(5) %}
-    <li class="list-group-item">
-        {{ track['title'] }}, {{ track['listen_count'] }}, {{
-        track['time_listened']}}
-    </li>
-    {% endfor %}
-</ul>
 <form action="{{ url_for('views.update') }}" , method="POST">
     <br />
     <div align="center">
@@ -18,5 +10,12 @@
     </div>
 </form>
 <br />
-
+<ul class="list-group list-group-flush" id="tracks">
+    {% for track in user.get_top_tracks_by_time_listened(20) %}
+    <li class="list-group-item">
+        {{ track['title'] }}, {{ track['listen_count'] }}, {{
+        track['time_listened']}}
+    </li>
+    {% endfor %}
+</ul>
 {% endblock %}
