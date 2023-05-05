@@ -2,6 +2,8 @@ from . import users
 from mongoengine import Document, EmbeddedDocument, StringField, IntField, ListField, DictField, EmailField, ObjectIdField, EmbeddedDocumentField
 from flask_login import UserMixin
 from bson import ObjectId
+from smtplib import SMTP
+from email.message import EmailMessage
 
 from .spotify import swap_tokens, get_recent_tracks
 
@@ -26,6 +28,7 @@ class User(UserMixin, Document):
         display_name (str): user's spotify display name
         pfp (str): user's spotify profile picture image url
         listen_data (dict): user's spotify listen data
+        time_last_updated ()
         _id (ObjectId): user's id in the database
     """
     _id = ObjectIdField(primary_key=True, required=True, unique=True)
@@ -246,6 +249,24 @@ class User(UserMixin, Document):
                     {'$push': {'listen_data': track.__dict__}}
                 )
         
+    def email_listen_data_raw(self, formatted):
+        """
+        Sends an email to the user's Spotify email address containing their listening data
+        
+        Args
+            self (User)
+            formatted (bool): if false, raw data will be sent; if true, formatted data will be sent
+            
+        Returns
+            None
+        """
+        listen_data = self.get_listen_data()
+
+        msg = EmailMessage()
+
+        return
+
+    def email_listen_data_formatted(self):
 
     @classmethod
     def from_email(cls, email):

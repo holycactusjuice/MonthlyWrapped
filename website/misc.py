@@ -33,5 +33,13 @@ def build_state():
 
 
 def played_at_unix(played_at):
-    return int(datetime.datetime.strptime(
+
+    try:
+        time = int(datetime.datetime.strptime(
         played_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+    except:
+        time = int(datetime.datetime.strptime(
+        played_at, "%Y-%m-%dT%H:%M:%SZ").timestamp())
+
+
+    return time

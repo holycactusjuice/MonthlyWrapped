@@ -11,11 +11,21 @@
 </form>
 <br />
 <ul class="list-group list-group-flush" id="tracks">
-    {% for track in user.get_top_tracks_by_time_listened(20) %}
-    <li class="list-group-item">
-        {{ track['title'] }}, {{ track['listen_count'] }}, {{
-        track['time_listened']}}
-    </li>
-    {% endfor %}
+    <table>
+        <tr>
+            <th>Album Art</th>
+            <th>Title</th>
+            <th>Listen Count</th>
+            <th>Time Listened</th>
+        </tr>
+        {% for track in user.get_top_tracks_by_time_listened(10) %}
+        <tr>
+            <td><img src="{{ track['album_art_url'] }}" alt="" width="128" height="128"></a></td>
+            <td>{{ track['title'] }}</td>
+            <td>{{ track['listen_count'] }}</td>
+            <td>{{ track['time_listened'] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
 </ul>
 {% endblock %}

@@ -61,7 +61,6 @@ def user_auth(client_id, response_type, redirect_uri, scopes):  # add state para
 
 
 def get_account_info(access_token):
-    # access_token = 'BQACYDnasg4aKAYeNkRW9Co2qOr9FraLidlZJwxNwAVUpqOk8C1Mk1epKPKElom57HznxsB1Z1yg1wSNGenRVIewTBchqvN3bYZVhns47qpN3_Tov4re8itZ5CKbQfgeyoyYUqXMUAF_qnWnFO4UaylQ3X2o7'
     url = endpoints['get_user']
     headers = {
         "Authorization": "Bearer " + access_token,
@@ -70,10 +69,6 @@ def get_account_info(access_token):
     response = requests.get(
         url=url, headers=headers
     )
-    print(access_token)
-    print('--------------------------------')
-    print(response.json())
-    print('--------------------------------')
     return response.json()
 
 

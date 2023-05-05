@@ -22,5 +22,4 @@ def home():
 @login_required
 def update():
     current_user.update_listen_data()
-
     return redirect(url_for('views.home'))

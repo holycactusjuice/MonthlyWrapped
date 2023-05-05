@@ -22,7 +22,6 @@ def login():
 @auth.route('/spotify-login', methods=['GET', 'POST'])
 def spotify_login():
     session.clear()
-    flash('spotify login')
     response_type = 'code'
     scopes = SCOPES
     auth_params = {
@@ -50,7 +49,7 @@ def callback():
     }
 
     response = requests.post(TOKEN_URL, params=params, headers=headers)
-    flash('status ', response.status_code)
+
     if response.status_code == 200:
         response_data = json.loads(response.text)
 
@@ -60,7 +59,6 @@ def callback():
         session['refresh_token'] = refresh_token
 
         info = get_account_info(access_token)
-        print(info)
         
         username = info['id']
         user_doc = users.find_one({"username": username})
