@@ -1,12 +1,13 @@
-from flask import Flask, flash
+from flask import Flask
 from flask_login import LoginManager
 from pymongo import MongoClient
 from flask_pymongo import PyMongo
 import os
 from dotenv import load_dotenv
-import mongoengine
-from flask_login import UserMixin
 from bson.objectid import ObjectId
+
+
+from .update import update_db
 
 
 load_dotenv()
@@ -55,3 +56,6 @@ def create_app():
             return None
 
     return app
+
+if __name__ == '__main__':
+    update_db()
