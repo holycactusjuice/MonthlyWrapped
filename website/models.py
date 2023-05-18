@@ -267,7 +267,7 @@ class User(UserMixin, Document):
         return
 
     def email_listen_data_formatted(self):
-        pass
+
     @classmethod
     def from_email(cls, email):
         """

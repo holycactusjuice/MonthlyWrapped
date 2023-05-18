@@ -1,1 +1,0 @@
-scp -ri C:\Users\pachy\OneDrive\Documents\monthlyWrapped\vs-flask-1.pem C:\Users\pachy\OneDrive\Documents\GitHub\spotify-app ubuntu@3.128.168.179:/home/ubuntu/spotify-app
