@@ -5,8 +5,10 @@ from bson import ObjectId
 from email.message import EmailMessage
 import requests
 import json
+import ssl
+import smtplib
 
-from .constants import endpoints, CLIENT_CREDS_B64, TIME
+from .constants import endpoints, CLIENT_CREDS_B64, TIME, EMAIL_PASSWORD
 from .misc import played_at_unix
 
 
@@ -555,7 +557,7 @@ class User(UserMixin, Document):
 
         self.append_tracks_to_playlist(playlist_id, track_ids)
 
-    def email_listen_data_raw(self, formatted):
+    def email_listen_data(self, formatted=False):
         """
         Sends an email to the user's Spotify email address containing their listening data
 
@@ -566,14 +568,30 @@ class User(UserMixin, Document):
         Returns
             None
         """
-        listen_data = self.get_listen_data()
+        email_sender = 'monthlyWrapped@gmail.com'
+        email_password = EMAIL_PASSWORD
+        email_receiver = self.email
 
-        msg = EmailMessage()
+        subject = 'Test Email'
+
+        if not formatted:
+            body = self.get_listen_data()
+        else:
+            pass
+
+        email = EmailMessage()
+        email['From'] = email_sender
+        email['To'] = email_receiver
+        email['Subject'] = subject
+        email.set_content(body)
+
+        context = ssl.create_default_context()
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+            smtp.login(email_sender, email_password)
+            smtp.sendmail(email_sender, email_receiver, email.as_string())
 
         return
-
-    def email_listen_data_formatted(self):
-        pass
 
     @classmethod
     def get_account_info(cls, access_token):

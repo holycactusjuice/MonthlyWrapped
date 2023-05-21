@@ -32,3 +32,10 @@ def new_playlist():
     current_user.create_new_monthly_wrapped(name, description)
 
     return redirect(url_for('views.home'))
+
+
+@views.route('/email_data', methods=['GET', 'POST'])
+@login_required
+def email_data():
+    current_user.email_listen_data()
+    return redirect(url_for('views.email_data'))
