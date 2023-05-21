@@ -10,7 +10,7 @@ import urllib
 from . import users
 from .spotify import get_account_info
 from .misc import build_state
-from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL, SCOPES, HOMEPAGE_URL
+from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL, SCOPES
 
 auth = Blueprint('auth', __name__)
 
@@ -89,8 +89,10 @@ def logout():
     logout_user()
     session.clear()
 
-    logout_url = 'https://www.spotify.com/logout/?redirect_uri=' + \
-        urllib.parse.quote(HOMEPAGE_URL)
+    spotify_logout_url = 'https://www.spotify.com/logout'
+    homepage_url = url_for('home', external=True)
+
+    logout_url = f'{spotify_logout_url}?next={homepage_url}'
 
     return redirect(logout_url)
     # return redirect(url_for('auth.login'))
