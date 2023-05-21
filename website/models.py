@@ -2,13 +2,26 @@ from . import users
 from mongoengine import Document, EmbeddedDocument, StringField, IntField, ListField, DictField, EmailField, ObjectIdField, EmbeddedDocumentField
 from flask_login import UserMixin
 from bson import ObjectId
-from smtplib import SMTP
 from email.message import EmailMessage
+import requests
+import json
 
-from .spotify import swap_tokens, get_recent_tracks, create_playlist, append_tracks_to_playlist
+from .constants import endpoints, CLIENT_CREDS_B64, TIME
+from .misc import played_at_unix
 
 
 class Track(EmbeddedDocument):
+    """
+    Class to represent a Spotify track
+
+    Attributes:
+        title (str): title of track
+        artist (str): artist of track
+        album (str): album to which track belongs
+        art (str): album art url
+        length (int): length of track in seconds
+        id (str): Spotify id of track
+    """
     title = StringField(required=True)
     artists = ListField(StringField(), required=True)
     album = StringField(required=True)
@@ -16,6 +29,41 @@ class Track(EmbeddedDocument):
     length = IntField(required=True)  # in seconds
     id = StringField(primary_key=True, required=True,
                      unique=True)  # same as spotify_id
+
+    def __init__(self, track_id, title, artists, album, album_art_url, length, last_listen=-1, listen_count=0, time_listened=0):
+        self.track_id = track_id
+        self.title = title
+        self.artists = artists
+        self.album = album
+        self.album_art_url = album_art_url
+        self.length = length
+        self.last_listen = last_listen
+        self.listen_count = listen_count
+        self.time_listened = time_listened
+
+    @classmethod
+    def from_json(cls, track_json):
+        """
+        Creates a Track object from a track JSON
+
+        Args:
+            track_json (dict): track json received from Spotify API
+        Returns:
+            track (Track): Track object with track data
+        """
+        print(track_json)
+        print('AAAAAAAAAAAAAAAAAAAAAAAAA')
+        track_id = track_json['track']['id']
+        title = track_json['track']['name']
+        artists = [artist["name"]
+                   for artist in track_json["track"]["artists"]]
+        album = track_json["track"]["album"]["name"]
+        album_art_url = track_json["track"]["album"]["images"][0]["url"]
+        length = int(track_json['track']['duration_ms'] / 1000)
+
+        track = Track(track_id, title, artists, album, album_art_url, length)
+
+        return track
 
 
 class User(UserMixin, Document):
@@ -127,6 +175,153 @@ class User(UserMixin, Document):
         listen_data = user_document['listen_data']
         return listen_data
 
+    def swap_tokens(self):
+        """
+        Swaps the current refresh token for a new access token (and refresh token if the last one has expired)
+
+        Args:
+            refresh_token (str): old refresh token
+
+        Returns:
+            new_access_token (str): new access token
+        """
+        url = 'https://accounts.spotify.com/api/token'
+        headers = {
+            'Authorization': 'Basic ' + CLIENT_CREDS_B64,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+        params = {
+            'grant_type': 'refresh_token',
+            'refresh_token': self.refresh_token
+        }
+
+        response = requests.post(
+            url=url, headers=headers, data=params
+        )
+        resp_json = response.json()
+
+        new_access_token = resp_json['access_token']
+
+        tokens = {
+            'access_token': new_access_token
+        }
+
+        # Spotiy only gives a refresh token if the last one has expired
+        # check if the response json has a refresh token and return
+        if 'refresh_token' in resp_json:
+            new_refresh_token = resp_json['refresh_token']
+            tokens['refresh_token'] = new_refresh_token
+
+        return tokens
+
+    def get_recent_tracks(self, limit=50):
+        """
+        Gets user's recent tracks from Spotify API and returns a list of Track objects in the following format:
+        [
+            {
+                'track_id' (str): 'track1',
+                'title' (str): 'track1_title',
+                'artists' (list): ['artist1', 'artist2'],
+                'album' (str): 'album',
+                'album_art_url' (str): 'j3208qprum1pr82',
+                'length' (int): 123,
+                'last_listen' (int): 1234567890,
+                'listen_count' (int): 123,
+                'time_listened' (int): 123456,
+            },
+            {
+                'track_id' (str): 'track2',
+                ...
+            }
+        ]
+        Args:
+            limit (int): number of tracks to return
+
+        Returns:
+            tracks (list): list of Track objects
+        """
+
+        # kwargs for GET request
+        url = endpoints['get_recently_played']
+        headers = {
+            "Authorization": f"Bearer {self.access_token}"
+        }
+        params = {
+            "before": int(TIME),  # must be int
+            "limit": limit
+        }
+
+        # send GET request to Spotify's get recently played endpoint
+        response = requests.get(
+            url=url,
+            headers=headers,
+            params=params
+        )
+
+        # if the response gives a 401 or 403 error, the access token has expired
+        # return -1 to indicate this
+        if response.status_code in (401, 403):
+            return -1
+
+        # get json from response object
+        resp_json = response.json()
+
+        recent_tracks = resp_json['items']
+
+        # reverse list since Spotify API gives last played track first
+        recent_tracks.reverse()
+
+        tracks = []
+
+        # iterate through each track json in recent_tracks to turn each one into a Track object
+        for i, track_json in enumerate(recent_tracks):
+
+            # we can't calculate listen time for the first track since there is no track before it
+            # so skip the iteration if i == 0
+            if i == 0:
+                continue
+
+            track = Track.from_json(track_json)
+
+            # add the track to tracks
+            tracks.append(track)
+
+            # with the index, the track can now be updated
+            # update the following fields:
+            #   - last_listen
+            #   - listen_count
+            #   - time_listened
+
+            # updating last_listen
+
+            # get the time this track ended
+            played_at = played_at_unix(track_json['played_at'])
+            track.last_listen = played_at
+
+            # updating listen_count
+
+            track.listen_count = 1
+
+            # updating time_listened
+
+            length = int(track.length)
+            # get the time the last track ended in unix timestamp
+            last_track = recent_tracks[i - 1]
+            last_played_at = played_at_unix(last_track['played_at'])
+            # time_listened is the difference between when the last track ended (when this track started) and when this track ended
+            time_listened = played_at - last_played_at
+            # time_listened may be greater than track length if:
+            #   - the user took a break before playing the track
+            #   - the user paused the track
+            #   - this is the first song in the session
+            # so if time_listened > track_length, make time_listened = track_length
+            time_listened = min(time_listened, length)
+            track.time_listened = time_listened
+
+            tracks.append(track)
+
+        return tracks
+
     # def update_user(self):
     #     """
     #     Updates the user's listen data by retrieving info from the database
@@ -143,6 +338,44 @@ class User(UserMixin, Document):
     #     self.pfp = user_doc['pfp']
     #     self.listen_data = user_doc['listen_data']
 
+    def swap_tokens(self):
+        """
+        Swaps the current refresh token for a new access token (and refresh token if the last one has expired)
+
+        Args:
+            self (User)
+        Returns:
+            new_access_token (str): new access token
+        """
+        url = 'https://accounts.spotify.com/api/token'
+        headers = {
+            'Authorization': 'Basic ' + CLIENT_CREDS_B64,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        }
+        params = {
+            'grant_type': 'refresh_token',
+            'refresh_token': self.refresh_token
+        }
+
+        response = requests.post(
+            url=url, headers=headers, data=params
+        )
+        resp_json = response.json()
+
+        new_access_token = resp_json['access_token']
+
+        tokens = {
+            'access_token': new_access_token
+        }
+
+        # Spotiy only gives a refresh token if the last one has expired
+        # check if the response json has a refresh token and return
+        if 'refresh_token' in resp_json:
+            new_refresh_token = resp_json['refresh_token']
+            tokens['refresh_token'] = new_refresh_token
+
+        return tokens
+
     def update_tokens(self):
         """
         Updates the current tokens by sending a request to the Spotify API with the user's current refresh token
@@ -152,8 +385,7 @@ class User(UserMixin, Document):
         Returns:
             None (updates tokens in MongoDB)
         """
-        refresh_token = self.get_refresh_token()
-        tokens = swap_tokens(refresh_token)
+        tokens = self.swap_tokens()
 
         new_access_token = tokens['access_token']
 
@@ -209,13 +441,11 @@ class User(UserMixin, Document):
         Returns:
             None (only updates database)
         """
-        access_token = self.get_access_token()
-        recent_tracks = get_recent_tracks(access_token)
+        recent_tracks = self.get_recent_tracks()
 
         if recent_tracks == -1:
             self.update_tokens()
-            access_token = self.get_access_token()
-            recent_tracks = get_recent_tracks(access_token)
+            recent_tracks = self.get_recent_tracks()
 
         for track in recent_tracks:
             # update the following fields:
@@ -251,6 +481,57 @@ class User(UserMixin, Document):
                     {'$push': {'listen_data': track.__dict__}}
                 )
 
+    def create_playlist(self, name, description, public=False):
+        """
+        Creates a new playlist in the user's account
+
+        Args:
+            name (str): name of playlist
+            description (str): description of playlist
+            public (bool): playlist will be public if true, else false. defaults to false
+
+        Returns:
+            playlist_id (str): ID of playlist
+        """
+        username = self.username
+        access_token = self.access_token
+        url = f"https://api.spotify.com/v1/users/{username}/playlists"
+        headers = {
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
+        }
+        data = json.dumps({
+            'name': name,
+            'description': description,
+            'public': public
+        })
+        response = requests.post(url, headers=headers, data=data)
+        response_data = response.json()
+
+        playlist_id = response_data['id']
+        print(f'PLAYLIST ID: {playlist_id}')
+
+        return playlist_id
+
+    def append_tracks_to_playlist(self, playlist_id, track_ids):
+        """
+        Appends a track to a user's playlist
+
+        Args:
+            playlist_id (str): Spotify playlist ID
+            track_id (list): Spotify track IDs
+        """
+
+        url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+        headers = {
+            'Authorization': f"Bearer {self.access_token}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            'uris': track_ids
+        }
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+
     def create_new_monthly_wrapped(self, name, description, public=False):
         """
         Creates a new monthly wrapped playlist in the user's account
@@ -261,20 +542,18 @@ class User(UserMixin, Document):
             description (str): description of playlist
             public (bool, optional): playlist is public if true. Defaults to False.
         """
-        username = self.username
-        access_token = self.access_token
+        self.update_tokens()
 
-        playlist_id = create_playlist(
-            username, access_token, name, description, public)
+        playlist_id = self.create_playlist(name, description, public)
         top_tracks = self.get_top_tracks_by_listen_count(10)
 
         track_ids = []
 
         for track in top_tracks:
-            track_id = track.track_id
+            track_id = track['track_id']
             track_ids.append(f'spotify:track:{track_id}')
 
-        append_tracks_to_playlist(playlist_id, track_ids, self.access_token)
+        self.append_tracks_to_playlist(playlist_id, track_ids)
 
     def email_listen_data_raw(self, formatted):
         """
@@ -295,6 +574,18 @@ class User(UserMixin, Document):
 
     def email_listen_data_formatted(self):
         pass
+
+    @classmethod
+    def get_account_info(cls, access_token):
+        url = endpoints['get_user']
+        headers = {
+            "Authorization": "Bearer " + access_token,
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        response = requests.get(
+            url=url, headers=headers
+        )
+        return response.json()
 
     @classmethod
     def from_email(cls, email):
