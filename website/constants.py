@@ -30,3 +30,5 @@ endpoints = {
 
 # add 5 hours to convert to GMT, multiply by 1000 to get milliseconds
 TIME = (time.time() + 5 * 60 * 60) * 1000
+
+HOMEPAGE_URL = "http://18.220.181.234"

@@ -5,11 +5,12 @@ from flask_login import login_user, logout_user, login_required, current_user
 import json
 from urllib.parse import urlencode
 from bson import ObjectId
+import urllib
 
 from . import users
 from .spotify import get_account_info
 from .misc import build_state
-from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL, SCOPES
+from .constants import CLIENT_ID, REDIRECT_URI, AUTH_URL, CLIENT_CREDS_B64, TOKEN_URL, SCOPES, HOMEPAGE_URL
 
 auth = Blueprint('auth', __name__)
 
@@ -59,7 +60,7 @@ def callback():
         session['refresh_token'] = refresh_token
 
         info = get_account_info(access_token)
-        
+
         username = info['id']
         user_doc = users.find_one({"username": username})
 
@@ -87,5 +88,9 @@ def logout():
     # Clear the session and redirect the user to the Spotify logout URL
     logout_user()
     session.clear()
-    return redirect('https://www.spotify.com/logout/')
+
+    logout_url = 'https://www.spotify.com/logout/?redirect_uri=' + \
+        urllib.parse.quote(HOMEPAGE_URL)
+
+    return redirect(logout_url)
     # return redirect(url_for('auth.login'))

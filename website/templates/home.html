@@ -16,7 +16,7 @@
             <th>Album Art</th>
             <th>Title</th>
             <th>Listen Count</th>
-            <th>Time Listened</th>
+            <th>Time Listened (s)</th>
         </tr>
         {% for track in user.get_top_tracks_by_time_listened(50) %}
         <tr>
