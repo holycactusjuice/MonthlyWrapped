@@ -89,10 +89,6 @@ def logout():
     logout_user()
     session.clear()
 
-    spotify_logout_url = 'https://www.spotify.com/logout'
-    homepage_url = url_for('home', external=True)
-
-    logout_url = f'{spotify_logout_url}?next={homepage_url}'
+    logout_url = 'https://accounts.spotify.com/en/logout'
 
     return redirect(logout_url)
-    # return redirect(url_for('auth.login'))
