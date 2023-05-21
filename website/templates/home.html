@@ -3,12 +3,12 @@
 
 <h2 align="center">Home</h2>
 <h3 align="center">Welcome, {{ user.display_name }}</h3>
-<form action="{{ url_for('views.update') }}" , method="POST">
+<!-- <form action="{{ url_for('views.update') }}" , method="POST">
     <br />
     <div align="center">
         <button type="update" class="btn btn-primary">update</button>
     </div>
-</form>
+</form> -->
 <br />
 <ul class="list-group list-group-flush" id="tracks">
     <table>
@@ -18,7 +18,7 @@
             <th>Listen Count</th>
             <th>Time Listened</th>
         </tr>
-        {% for track in user.get_top_tracks_by_time_listened(10) %}
+        {% for track in user.get_top_tracks_by_time_listened(50) %}
         <tr>
             <td><img src="{{ track['album_art_url'] }}" alt="" width="128" height="128"></a></td>
             <td>{{ track['title'] }}</td>
