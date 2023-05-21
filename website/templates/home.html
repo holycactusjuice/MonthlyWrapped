@@ -3,12 +3,12 @@
 
 <h2 align="center">Home</h2>
 <h3 align="center">Welcome, {{ user.display_name }}</h3>
-<!-- <form action="{{ url_for('views.update') }}" , method="POST">
+<form action="{{ url_for('views.create-playlist') }}" , method="POST">
     <br />
     <div align="center">
-        <button type="update" class="btn btn-primary">update</button>
+        <button type="create-playlist" class="btn btn-primary">create playlist</button>
     </div>
-</form> -->
+</form>
 <br />
 <ul class="list-group list-group-flush" id="tracks">
     <table>

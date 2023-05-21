@@ -5,7 +5,7 @@ from bson import ObjectId
 from smtplib import SMTP
 from email.message import EmailMessage
 
-from .spotify import swap_tokens, get_recent_tracks
+from .spotify import swap_tokens, get_recent_tracks, create_playlist, append_tracks_to_playlist
 
 
 class Track(EmbeddedDocument):
@@ -42,7 +42,7 @@ class User(UserMixin, Document):
         Track), required=True, default=[])
 
     def __init__(self, _id, username, email, display_name, pfp, access_token, refresh_token, listen_data=[], *args, **kwargs):
-       
+
         super(User, self).__init__(*args, **kwargs)
 
         self._id = _id
@@ -126,7 +126,7 @@ class User(UserMixin, Document):
         user_document = users.find_one({'_id': ObjectId(self._id)})
         listen_data = user_document['listen_data']
         return listen_data
-    
+
     # def update_user(self):
     #     """
     #     Updates the user's listen data by retrieving info from the database
@@ -154,15 +154,17 @@ class User(UserMixin, Document):
         """
         refresh_token = self.get_refresh_token()
         tokens = swap_tokens(refresh_token)
-        
+
         new_access_token = tokens['access_token']
-        
+
         # update refresh token only if a new one has been issued
         if 'refresh_token' in tokens:
             new_refresh_token = tokens['refresh_token']
-            users.update_one({'username': self.username}, {'$set': {'access_token': new_access_token, 'refresh_token': new_refresh_token}})
+            users.update_one({'username': self.username}, {'$set': {
+                             'access_token': new_access_token, 'refresh_token': new_refresh_token}})
         else:
-            users.update_one({'username': self.username}, {'$set': {'access_token': new_access_token}})
+            users.update_one({'username': self.username}, {
+                             '$set': {'access_token': new_access_token}})
 
     def get_top_tracks_by_listen_count(self, n):
         """
@@ -198,11 +200,10 @@ class User(UserMixin, Document):
 
         return top_tracks
 
-
     def update_listen_data(self):
         """
         Updates the user's listen data in MongoDB
-        
+
         Args:
             self (User)
         Returns:
@@ -210,12 +211,12 @@ class User(UserMixin, Document):
         """
         access_token = self.get_access_token()
         recent_tracks = get_recent_tracks(access_token)
-        
+
         if recent_tracks == -1:
             self.update_tokens()
             access_token = self.get_access_token()
             recent_tracks = get_recent_tracks(access_token)
-        
+
         for track in recent_tracks:
             # update the following fields:
             #   - last_listen
@@ -232,7 +233,8 @@ class User(UserMixin, Document):
                 # check if this listen has already been recorded
                 # if last_listen > the track to be added's last_listen, then add it
                 if track.last_listen > result['listen_data'][0]['last_listen']:
-                    query = {'username': self.username, 'listen_data.track_id': track.track_id}
+                    query = {'username': self.username,
+                             'listen_data.track_id': track.track_id}
                     update = {
                         '$set': {
                             'listen_data.$.last_listen': track.last_listen,
@@ -248,15 +250,40 @@ class User(UserMixin, Document):
                     {'username': self.username},
                     {'$push': {'listen_data': track.__dict__}}
                 )
-        
+
+    def create_new_monthly_wrapped(self, name, description, public=False):
+        """
+        Creates a new monthly wrapped playlist in the user's account
+
+        Args:
+            self (User)
+            name (str): name of playlist
+            description (str): description of playlist
+            public (bool, optional): playlist is public if true. Defaults to False.
+        """
+        username = self.username
+        access_token = self.access_token
+
+        playlist_id = create_playlist(
+            username, access_token, name, description, public)
+        top_tracks = self.get_top_tracks_by_listen_count(10)
+
+        track_ids = []
+
+        for track in top_tracks:
+            track_id = track.track_id
+            track_ids.append(f'spotify:track:{track_id}')
+
+        append_tracks_to_playlist(playlist_id, track_ids, self.access_token)
+
     def email_listen_data_raw(self, formatted):
         """
         Sends an email to the user's Spotify email address containing their listening data
-        
+
         Args
             self (User)
             formatted (bool): if false, raw data will be sent; if true, formatted data will be sent
-            
+
         Returns
             None
         """
@@ -268,7 +295,7 @@ class User(UserMixin, Document):
 
     def email_listen_data_formatted(self):
         pass
-    
+
     @classmethod
     def from_email(cls, email):
         """

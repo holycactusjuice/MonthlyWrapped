@@ -230,15 +230,67 @@ def swap_tokens(refresh_token):
     resp_json = response.json()
 
     new_access_token = resp_json['access_token']
-    
+
     tokens = {
         'access_token': new_access_token
     }
-    
+
     # Spotiy only gives a refresh token if the last one has expired
     # check if the response json has a refresh token and return
     if 'refresh_token' in resp_json:
         new_refresh_token = resp_json['refresh_token']
         tokens['refresh_token'] = new_refresh_token
-    
+
     return tokens
+
+
+def create_playlist(username, access_token, name, description, public=False):
+    """
+    Creates a new playlist in the user's account
+
+    Args:
+        username (str): user's Spotify ID
+        access_token (str): user's access token
+        name (str): name of playlist
+        description (str): description of playlist
+        public (bool): playlist will be public if true, else false. defaults to false
+
+    Returns:
+        playlist_id (str): ID of playlist
+    """
+    url = f"https://api.spotify.com/v1/{username}/playlists"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        'name': name,
+        'description': description,
+        'public': public
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(data))
+    response_data = response.json()
+
+    playlist_id = response_data['id']
+
+    return playlist_id
+
+
+def append_tracks_to_playlist(playlist_id, track_ids, access_token):
+    """
+    Appends a track to a user's playlist
+
+    Args:
+        playlist_id (str): Spotify playlist ID
+        track_id (list): Spotify track IDs
+    """
+
+    url = f"https://api.spotify.com/v1/playlists/{playlist_id}/tracks"
+    headers = {
+        'Authorization': f"Bearer {access_token}",
+        "Content-Type": "application/json"
+    }
+    data = {
+        'uris': track_ids
+    }
+    response = requests.post(url, headers=headers, data=json.dumps(data))
