@@ -4,7 +4,7 @@ from flask_login import login_required, current_user
 from . import users
 
 from .spotify import get_recent_tracks
-from .mongo import get_user_document
+from .misc import get_user_document
 
 views = Blueprint('views', __name__)
 

@@ -3,6 +3,8 @@ import string
 import secrets
 import datetime
 
+from . import users
+
 
 def is_valid_email(email):
     """
@@ -36,10 +38,13 @@ def played_at_unix(played_at):
 
     try:
         time = int(datetime.datetime.strptime(
-        played_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
+            played_at, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp())
     except:
         time = int(datetime.datetime.strptime(
-        played_at, "%Y-%m-%dT%H:%M:%SZ").timestamp())
-
+            played_at, "%Y-%m-%dT%H:%M:%SZ").timestamp())
 
     return time
+
+
+def get_user_document_by_id(user_id):
+    return users.find_one({'_id': user_id})
