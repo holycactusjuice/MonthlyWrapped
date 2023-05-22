@@ -34,8 +34,14 @@ def new_playlist():
     return redirect(url_for('views.home'))
 
 
+@views.route('/data', methods=['GET', 'POST'])
+@login_required
+def data():
+    return render_template('data.html')
+
+
 @views.route('/email_data', methods=['GET', 'POST'])
 @login_required
 def email_data():
     current_user.email_listen_data()
-    return redirect(url_for('views.email_data'))
+    return redirect(url_for('views.data'))

@@ -575,7 +575,7 @@ class User(UserMixin, Document):
         subject = 'Test Email'
 
         if not formatted:
-            body = self.get_listen_data()
+            body = str(self.get_listen_data())
         else:
             pass
 
@@ -584,6 +584,8 @@ class User(UserMixin, Document):
         email['To'] = email_receiver
         email['Subject'] = subject
         email.set_content(body)
+
+        print(email)
 
         context = ssl.create_default_context()
 
