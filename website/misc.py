@@ -44,7 +44,3 @@ def played_at_unix(played_at):
             played_at, "%Y-%m-%dT%H:%M:%SZ").timestamp())
 
     return time
-
-
-def get_user_document_by_id(user_id):
-    return users.find_one({'_id': user_id})

@@ -478,10 +478,9 @@ class User(UserMixin, Document):
                     }
                     users.update_one(query, update)
             else:
-                users.update_one(
-                    {'username': self.username},
-                    {'$push': {'listen_data': track.__dict__}}
-                )
+                query = {'username': self.username}
+                update = {'$push': {'listen_data': track.__dict__}}
+                users.update_one(query, update)
 
     def create_playlist(self, name, description, public=False):
         """
@@ -594,6 +593,14 @@ class User(UserMixin, Document):
             smtp.sendmail(email_sender, email_receiver, email.as_string())
 
         return
+
+    def clear_listen_data(self):
+        result = users.find_one({'username': self.username})
+
+        if result:
+            query = {'username': self.username}
+            update = {'$set': {'listen_data': []}}
+            users.update_one(query, update)
 
     @classmethod
     def get_account_info(cls, access_token):
