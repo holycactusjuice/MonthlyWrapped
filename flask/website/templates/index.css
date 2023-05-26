@@ -1,0 +1,12 @@
+.home-main-section {
+    align-items: stretch;
+    justify-content: space-between;
+    flex-grow: 1;
+    text-align: center;
+}
+
+.title {
+    text-align: center;
+    padding-top: 20rem;
+    padding-bottom: 0;
+}
