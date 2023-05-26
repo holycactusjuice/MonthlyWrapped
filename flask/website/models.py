@@ -19,7 +19,7 @@ class Track(EmbeddedDocument):
     Attributes:
         title (str): title of track
         artist (str): artist of track
-        album (str): album to which track belongs
+        album_art_url (str): album to which track belongs
         art (str): album art url
         length (int): length of track in seconds
         id (str): Spotify id of track
@@ -27,7 +27,7 @@ class Track(EmbeddedDocument):
     title = StringField(required=True)
     artists = ListField(StringField(), required=True)
     album = StringField(required=True)
-    art = StringField(required=True)  # url for album art
+    album_art_url = StringField(required=True)  # url for album art
     length = IntField(required=True)  # in seconds
     id = StringField(primary_key=True, required=True,
                      unique=True)  # same as spotify_id
@@ -53,8 +53,6 @@ class Track(EmbeddedDocument):
         Returns:
             track (Track): Track object with track data
         """
-        print(track_json)
-        print('AAAAAAAAAAAAAAAAAAAAAAAAA')
         track_id = track_json['track']['id']
         title = track_json['track']['name']
         artists = [artist["name"]
@@ -171,7 +169,7 @@ class User(UserMixin, Document):
         Args:
             self (User)
         Returns:
-            listen_data (dict)
+            listen_data (list)
         """
         user_document = users.find_one({'_id': ObjectId(self._id)})
         listen_data = user_document['listen_data']
@@ -324,21 +322,6 @@ class User(UserMixin, Document):
 
         return tracks
 
-    # def update_user(self):
-    #     """
-    #     Updates the user's listen data by retrieving info from the database
-
-    #     Args:
-    #         self (user)
-    #     Returns:
-    #         None (updates user listen data in place)
-    #     """
-    #     username = self.username
-    #     user_doc = users.find_one({'username': username})
-    #     self.email = user_doc['email']
-    #     self.display_name = user_doc['display_name']
-    #     self.pfp = user_doc['pfp']
-    #     self.listen_data = user_doc['listen_data']
 
     def swap_tokens(self):
         """
@@ -595,6 +578,9 @@ class User(UserMixin, Document):
         return
 
     def clear_listen_data(self):
+        """
+        Clears the user's listen data in MongoDB
+        """
         result = users.find_one({'username': self.username})
 
         if result:
@@ -602,8 +588,56 @@ class User(UserMixin, Document):
             update = {'$set': {'listen_data': []}}
             users.update_one(query, update)
 
+    def get_total_time_listened(self):
+        """
+        Returns the user's total listen time in seconds
+
+        Returns:
+            total_time_listened (int): the user's total listen time in seconds
+        """
+        listen_data = self.get_listen_data()
+        total_time_listened = 0
+        for track in listen_data:
+            time_listened = track['time_listened']
+            total_time_listened += time_listened
+        return total_time_listened
+    
+    def get_total_listen_count(self):
+        """
+        Returns the user's total listen count
+
+        Returns:
+            total_listen_count (int): the user's total listen count
+        """
+        listen_data = self.get_listen_data()
+        total_listen_count = 0
+        for track in listen_data:
+            listen_count = track['listen_count']
+            total_listen_count += listen_count
+        return total_listen_count
+    
+    def get_total_track_count(self):
+        """
+        Returns the number of tracks that the user has listened to
+
+        Returns:
+            total_track_count (int): number of tracks that the user has listened to
+        """
+        listen_data = self.get_listen_data()
+        total_track_count = len(listen_data)
+        return total_track_count
+    
     @classmethod
     def get_account_info(cls, access_token):
+        """
+        Gets a user's account information from Spotify API
+
+        Args:
+            access_token (str): user access token
+
+        Returns:
+            dict: user's account information in json format
+        """
         url = endpoints['get_user']
         headers = {
             "Authorization": "Bearer " + access_token,

@@ -18,7 +18,7 @@
             <th>Listen Count</th>
             <th>Time Listened (s)</th>
         </tr>
-        {% for track in user.get_top_tracks_by_time_listened(50) %}
+        {% for track in user.get_top_tracks_by_listen_count(50) %}
         <tr>
             <td><img src="{{ track['album_art_url'] }}" alt="" width="128" height="128"></a></td>
             <td>{{ track['title'] }}</td>

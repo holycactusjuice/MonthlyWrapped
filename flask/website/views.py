@@ -45,3 +45,10 @@ def data():
 def email_data():
     current_user.email_listen_data()
     return redirect(url_for('views.data'))
+
+
+@views.route('/api/listen-data')
+def get_listen_data_by_count():
+    listen_data = current_user.get_top_tracks_by_listen_count(100)
+    print(current_user.get_total_listen_count())
+    return jsonify(listen_data)
