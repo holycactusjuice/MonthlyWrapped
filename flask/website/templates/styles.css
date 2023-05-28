@@ -13,6 +13,7 @@ body {
     font-family: Nunito, sans-serif;
     color: white;
     min-height: 100vh;
+    overflow: hidden;
 }
 
 .full-height-grow {
@@ -37,6 +38,7 @@ body {
     margin: 0;
     padding: 0;
     list-style: none;
+    font-size: 1.1rem;
 }
 
 .main-nav a {
