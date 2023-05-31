@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Nunito&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700&display=swap");
 
 *,
 *::before,
@@ -69,12 +69,4 @@ body {
     font-size: 3rem;
     margin-bottom: 1rem;
     margin-top: 0;
-}
-
-.btn {
-    color: white;
-    background-color: #3c896d;
-    padding: 0.75rem 1.5rem;
-    border-radius: 0.5rem;
-    text-decoration: none;
 }

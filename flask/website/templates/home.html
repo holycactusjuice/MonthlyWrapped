@@ -1,31 +1,30 @@
-{% extends 'base.html' %} {% block title %}Home{% endblock %} {% block content
-%}
-
-<h2 align="center">Home</h2>
-<h3 align="center">Welcome, {{ user.display_name }}</h3>
-<form action="{{ url_for('views.new_playlist') }}" , method="POST">
-    <br />
-    <div align="center">
-        <button type="create-playlist" class="btn btn-primary">create playlist</button>
+{% extends 'base.html' %} {% block styles %}
+<link
+    rel="stylesheet"
+    type="text/css"
+    href="{{ url_for('static', filename='css/home.css') }}"
+/>
+{% endblock %} {% block title %}Login{% endblock %} {% block content %}
+<div class="main-container">
+    <div class="greeting">hi there, {{user.display_name}}!</div>
+    <div class="main-text-container">
+        <div class="minor-text">this month, you've listened to</div>
+        <div class="major-text">{{user.get_total_track_count()}} tracks</div>
+        <div class="minor-text">a combined</div>
+        <div class="major-text">{{user.get_total_listen_count()}} times</div>
+        <div class="minor-text">for a total of</div>
+        <div class="major-text">
+            {{user.get_total_time_listened()['hours']}} hours,
+            {{user.get_total_time_listened()['minutes']}} minutes,
+            {{user.get_total_time_listened()['seconds']}} seconds
+        </div>
     </div>
-</form>
-<br />
-<ul class="list-group list-group-flush" id="tracks">
-    <table>
-        <tr>
-            <th>Album Art</th>
-            <th>Title</th>
-            <th>Listen Count</th>
-            <th>Time Listened (s)</th>
-        </tr>
-        {% for track in user.get_top_tracks_by_listen_count(50) %}
-        <tr>
-            <td><img src="{{ track['album_art_url'] }}" alt="" width="128" height="128"></a></td>
-            <td>{{ track['title'] }}</td>
-            <td>{{ track['listen_count'] }}</td>
-            <td>{{ track['time_listened'] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-</ul>
+    <div class="bottom-text">see how your listening time is split up</div>
+
+    <div class="arrow">
+        <a href="/tracks"
+            ><img src="../static/images/white-arrow.png" height="15"
+        /></a>
+    </div>
+</div>
 {% endblock %}

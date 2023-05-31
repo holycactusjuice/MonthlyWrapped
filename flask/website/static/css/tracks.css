@@ -1,0 +1,65 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;500;600;700&display=swap");
+
+body {
+    overflow-y: scroll;
+}
+
+.main-container {
+    align-items: stretch;
+    justify-content: space-between;
+    flex-grow: 1;
+    text-align: center;
+    vertical-align: middle;
+    align-items: center;
+}
+
+.title {
+    margin-bottom: 3rem;
+}
+
+.btn {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.track-info-container {
+    margin-top: 3rem;
+}
+
+.track-info {
+    text-align: left;
+    display: grid;
+    grid-template-columns: 1fr 2fr 12fr 4fr 6fr;
+    grid-gap: 3rem;
+    margin-top: 1.25rem;
+    margin-bottom: 1.25rem;
+    align-items: center;
+    font-size: 1.25rem;
+    font-weight: 300;
+    /* height: 100px; */
+}
+
+.track-title {
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+    font-size: 1.25rem;
+}
+
+.track-artist {
+    font-size: 1rem;
+}
+
+.track-rank {
+    font-size: 1.25rem;
+    justify-self: end;
+}
+
+.track-info-container .item:first-child {
+    justify-self: end;
+}
+
+.track-album-art a img {
+    margin: 0;
+    padding: 0;
+    display: block;
+}

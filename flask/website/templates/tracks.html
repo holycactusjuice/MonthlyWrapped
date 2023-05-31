@@ -1,0 +1,45 @@
+{% extends 'base.html' %} {% block styles %}
+<link
+    rel="stylesheet"
+    type="text/css"
+    href="{{ url_for('static', filename='css/tracks.css') }}"
+/>
+{% endblock %} {% block title %}Login{% endblock %} {% block content %}
+<div class="main-container">
+    <div class="title">your top tracks this month</div>
+    <a href="/new_playlist" class="btn">create playlist</a>
+    <div class="track-info-container">
+        {% for track in user.get_top_tracks_by_listen_count(100) %}
+        <div class="track-info">
+            <div class="track-rank">{{loop.index}}</div>
+            <div class="track-album-art">
+                <a
+                    href="https://open.spotify.com/track/{{ track['track_id'] }}"
+                >
+                    <img
+                        src="{{ track['album_art_url'] }}"
+                        alt="art for {{ track['title'] }}"
+                        width="100"
+                    />
+                </a>
+            </div>
+            <div class="track-title-artist">
+                <div class="track-title">{{ track['title'] }}</div>
+                <div class="track-artist">{{ track['artists'][0] }}</div>
+            </div>
+            {% if loop.index == 1 %}
+            <div class="track-listen-count">
+                {{ track['listen_count'] }} listens
+            </div>
+            <div class="track-time-listened">
+                {{ track['time_listened'] }} seconds
+            </div>
+            {% else %}
+            <div class="track-listen-count">{{ track['listen_count'] }}</div>
+            <div class="track-time-listened">{{ track['time_listened'] }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

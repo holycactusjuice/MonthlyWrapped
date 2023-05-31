@@ -31,7 +31,7 @@ def spotify_login():
         'redirect_uri': REDIRECT_URI,
         'state': build_state()
     }
-
+    url = AUTH_URL + "?" + urlencode(auth_params)
     return redirect(AUTH_URL + "?" + urlencode(auth_params))
 
 
@@ -55,8 +55,8 @@ def callback():
 
         access_token = response_data["access_token"]
         refresh_token = response_data["refresh_token"]
+        
         session['access_token'] = access_token
-        session['refresh_token'] = refresh_token
 
         info = User.get_account_info(access_token)
 
@@ -74,8 +74,8 @@ def callback():
 
             users.insert_one(user.dict())
             flash('user added to database')
-        user = User.from_username(username)  # loads with email
-        login_user(user, remember=True)
+        user = User.from_username(username)  # loads with username
+        login_user(user)
         return redirect(url_for('views.home'))
     else:
         return redirect(url_for('auth.login'))

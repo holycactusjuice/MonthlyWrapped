@@ -7,6 +7,7 @@ import requests
 import json
 import ssl
 import smtplib
+import math
 
 from .constants import endpoints, CLIENT_CREDS_B64, TIME, EMAIL_PASSWORD
 from .misc import played_at_unix
@@ -529,7 +530,7 @@ class User(UserMixin, Document):
         self.update_tokens()
 
         playlist_id = self.create_playlist(name, description, public)
-        top_tracks = self.get_top_tracks_by_listen_count(10)
+        top_tracks = self.get_top_tracks_by_listen_count(100)
 
         track_ids = []
 
@@ -596,11 +597,21 @@ class User(UserMixin, Document):
             total_time_listened (int): the user's total listen time in seconds
         """
         listen_data = self.get_listen_data()
-        total_time_listened = 0
+        total_seconds_listened = 0
         for track in listen_data:
-            time_listened = track['time_listened']
-            total_time_listened += time_listened
-        return total_time_listened
+            seconds_listened = track['time_listened']
+            total_seconds_listened += seconds_listened
+            
+        seconds = total_seconds_listened % 60
+        minutes = math.floor((total_seconds_listened % 3600) / 60)
+        hours = math.floor(total_seconds_listened / 3600)
+        
+        total_time = {}
+        total_time['seconds'] = seconds
+        total_time['minutes'] = minutes
+        total_time['hours'] = hours
+        
+        return total_time
     
     def get_total_listen_count(self):
         """

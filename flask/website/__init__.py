@@ -6,7 +6,6 @@ import os
 from dotenv import load_dotenv
 from bson.objectid import ObjectId
 
-
 load_dotenv()
 
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
@@ -40,8 +39,8 @@ def create_app():
     from .models import User
 
     login_manager = LoginManager()
-    login_manager.login_view = 'auth.login'
     login_manager.init_app(app)
+    login_manager.login_view = 'auth.login'
 
     @login_manager.user_loader
     def load_user(user_id):
