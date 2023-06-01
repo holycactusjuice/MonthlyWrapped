@@ -54,6 +54,9 @@ class Track(EmbeddedDocument):
         Returns:
             track (Track): Track object with track data
         """
+
+        # retrieve track data from track JSON returned by Spotify API
+
         track_id = track_json['track']['id']
         title = track_json['track']['name']
         artists = [artist["name"]
@@ -62,6 +65,7 @@ class Track(EmbeddedDocument):
         album_art_url = track_json["track"]["album"]["images"][0]["url"]
         length = int(track_json['track']['duration_ms'] / 1000)
 
+        # instantiate Track object from these dat
         track = Track(track_id, title, artists, album, album_art_url, length)
 
         return track
@@ -91,7 +95,6 @@ class User(UserMixin, Document):
         Track), required=True, default=[])
 
     def __init__(self, _id, username, email, display_name, pfp, access_token, refresh_token, listen_data=[], *args, **kwargs):
-
         super(User, self).__init__(*args, **kwargs)
 
         self._id = _id
