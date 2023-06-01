@@ -1,5 +1,5 @@
 from . import users
-from mongoengine import Document, EmbeddedDocument, StringField, IntField, ListField, DictField, EmailField, ObjectIdField, EmbeddedDocumentField
+from mongoengine import Document, EmbeddedDocument, StringField, IntField, ListField, EmailField, ObjectIdField, EmbeddedDocumentField
 from flask_login import UserMixin
 from bson import ObjectId
 from email.message import EmailMessage

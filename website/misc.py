@@ -3,9 +3,6 @@ import string
 import secrets
 import datetime
 
-from . import users
-
-
 def is_valid_email(email):
     """
     Check if email is valid

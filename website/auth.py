@@ -1,11 +1,10 @@
 from flask import Blueprint, render_template, request, flash, redirect, url_for, session
 import requests
 from .models import User
-from flask_login import login_user, logout_user, login_required, current_user
+from flask_login import login_user, logout_user, login_required
 import json
 from urllib.parse import urlencode
 from bson import ObjectId
-import urllib
 
 from . import users
 from .misc import build_state

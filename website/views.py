@@ -1,9 +1,6 @@
-from flask import redirect, Blueprint, render_template, request, flash, jsonify, url_for, session
-import requests
-from flask_login import login_user, logout_user, login_required, current_user
+from flask import redirect, Blueprint, render_template, url_for, session
+from flask_login import login_required, current_user
 from datetime import datetime
-
-from . import users
 
 views = Blueprint('views', __name__)
 
