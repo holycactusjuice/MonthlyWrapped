@@ -31,7 +31,7 @@ def spotify_login():
         'state': build_state()
     }
     url = AUTH_URL + "?" + urlencode(auth_params)
-    return redirect(AUTH_URL + "?" + urlencode(auth_params))
+    return redirect(url)
 
 
 @auth.route('/callback')
